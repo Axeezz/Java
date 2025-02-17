@@ -7,7 +7,7 @@
         <version>3.4.2</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>org.example</groupId>
+    <groupId>com.moviolab</groupId>
     <artifactId>moviolab</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>moviolab</name>
