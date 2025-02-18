@@ -8,6 +8,7 @@ class MoviolabApplicationTests {
 
 	@Test
 	void contextLoads() {
+		// Метод будет реализован позже
 	}
 
 }

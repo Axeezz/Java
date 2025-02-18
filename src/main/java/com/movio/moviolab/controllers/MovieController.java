@@ -16,8 +16,7 @@ final class MovieController {
             new Movie("The Terminator", Movie.GENRE_SCIFI, 1984),
             new Movie("The Exorcist", Movie.GENRE_HORROR, 1973),
             new Movie("Lost In Translation", Movie.GENRE_COMEDY, 2003),
-            new Movie("E.T. The Extra Terrestrial",
-                    Movie.GENRE_ADVENTURE, 1982),
+            new Movie("E.T. The Extra Terrestrial", Movie.GENRE_ADVENTURE, 1982),
             new Movie("In The Mood For Love", Movie.GENRE_DRAMA, 2000),
             new Movie("Forrest Gump", Movie.GENRE_DRAMA, 1994),
             new Movie("Spirited Away", Movie.GENRE_ADVENTURE, 2001),
@@ -30,6 +29,7 @@ final class MovieController {
             new Movie("Reservoir Dogs", Movie.GENRE_CRIME, 1992),
             new Movie("The Godfather", Movie.GENRE_CRIME, 1972)
     );
+
     @GetMapping("/movies")
     public List<Movie> getMovies(
             @RequestParam(name = "genre", required = false) final String genre,

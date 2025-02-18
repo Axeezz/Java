@@ -26,8 +26,10 @@ public class Movie {
     }
 
     public final String getGenre() {
-        return genre; }
+        return genre;
+    }
 
     public final  Integer getYear() {
-        return year; }
+        return year;
+    }
 }
