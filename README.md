@@ -1,3 +1,5 @@
+[![Quality Gate](https://sonarqube.example.com/path/to/quality_gate_image.png)](https://sonarcloud.io/project/overview?id=Axeezz_Java)
+
 # Movio
 Добро пожаловать на Movio! Это русскоязычный интернет-сервис, предоставляющий свободно редактируемую базу данных и интернет-издание о кинематографе.
 
