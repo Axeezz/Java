@@ -1,6 +1,7 @@
 package com.movio.moviolab.controllers;
 
-import com.movio.moviolab.Movie;
+import com.movio.moviolab.exceptions.MovieNotFoundException;
+import com.movio.moviolab.service.Movie;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,19 +36,24 @@ final class MovieController {
             @RequestParam(name = "genre", required = false) final String genre,
             @RequestParam(name = "year", required = false) final Integer year
     ) {
-        return movies.stream()
+        List<Movie> filteredMovies = movies.stream()
                 .filter(movie -> (genre == null
                         || movie.getGenre().equalsIgnoreCase(genre))
                         && (year == null || movie.getYear().equals(year)))
                 .toList();
+
+        if (filteredMovies.isEmpty()) {
+            throw new MovieNotFoundException("No movies found with the given parameters.");
+        }
+
+        return filteredMovies;
     }
 
     @GetMapping("/movies/{movieName}")
     public Movie getMovieByMovieName(@PathVariable final String movieName) {
         return movies.stream()
-                .filter(movie
-                        -> movie.getMovieName().equalsIgnoreCase(movieName))
+                .filter(movie -> movie.getMovieName().equalsIgnoreCase(movieName))
                 .findFirst()
-                .orElse(null);
+                .orElseThrow(() -> new MovieNotFoundException("Movie not found: " + movieName));
     }
 }

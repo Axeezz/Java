@@ -1,4 +1,4 @@
-package com.movio.moviolab;
+package com.movio.moviolab.service;
 
 public class Movie {
     public static final String GENRE_DRAMA = "Drama"; ///
@@ -14,8 +14,7 @@ public class Movie {
     private final String genre;
     private final int year;
 
-    public Movie(final String inputMovieName,
-                 final String inputGenre, final int inputYear) {
+    public Movie(final String inputMovieName, final String inputGenre, final int inputYear) {
         this.movieName = inputMovieName;
         this.genre = inputGenre;
         this.year = inputYear;
