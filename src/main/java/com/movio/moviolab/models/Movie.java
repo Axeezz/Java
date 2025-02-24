@@ -1,4 +1,4 @@
-package com.movio.moviolab.services;
+package com.movio.moviolab.models;
 
 public class Movie {
     public static final String GENRE_DRAMA = "Drama";
@@ -11,14 +11,21 @@ public class Movie {
     public static final String GENRE_HORROR = "Horror";
     public static final String GENRE_CRIME = "Crime";
 
+    private final int id;
     private final String movieName;
     private final String genre;
     private final int year;
 
-    public Movie(final String inputMovieName, final String inputGenre, final int inputYear) {
+    public Movie(final int inputId, final String inputMovieName,
+                 final String inputGenre, final int inputYear) {
+        this.id = inputId;
         this.movieName = inputMovieName;
         this.genre = inputGenre;
         this.year = inputYear;
+    }
+
+    public final Integer getId() {
+        return id;
     }
 
     public final String getMovieName() {

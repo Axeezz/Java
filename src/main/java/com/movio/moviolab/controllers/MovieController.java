@@ -1,6 +1,6 @@
 package com.movio.moviolab.controllers;
 
-import com.movio.moviolab.services.Movie;
+import com.movio.moviolab.models.Movie;
 import com.movio.moviolab.services.MovieService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,8 +27,13 @@ final class MovieController {
         return movieService.getMovies(genre, year);
     }
 
-    @GetMapping("/movies/{movieName}")
+    @GetMapping("/movies/withname/{movieName}")
     public Movie getMovieByMovieName(@PathVariable final String movieName) {
         return movieService.getMovieByMovieName(movieName);
+    }
+
+    @GetMapping("/movies/withid/{id}")
+    public Movie getMovieById(@PathVariable final Integer id) {
+        return movieService.getMovieById(id);
     }
 }
