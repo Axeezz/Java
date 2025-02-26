@@ -25,7 +25,7 @@ public class MovieService {
             new Movie(15, "Paddington 2", Movie.GENRE_ADVENTURE, 2017),
             new Movie(16, "The Matrix", Movie.GENRE_SCIFI, 1999),
             new Movie(17, "Reservoir Dogs", Movie.GENRE_CRIME, 1992),
-            new Movie(15, "The Godfather", Movie.GENRE_CRIME, 1972)
+            new Movie(18, "The Godfather", Movie.GENRE_CRIME, 1972)
     );
 
     public List<Movie> getMovies(String genre, Integer year) {
@@ -42,11 +42,11 @@ public class MovieService {
         return filteredMovies;
     }
 
-    public Movie getMovieByMovieName(String movieName) {
+    public Movie getMovieByMovieName(String name) {
         return movies.stream()
-                .filter(movie -> movie.getMovieName().equalsIgnoreCase(movieName))
+                .filter(movie -> movie.getName().equalsIgnoreCase(name))
                 .findFirst()
-                .orElseThrow(() -> new MovieNotFoundException("Movie not found: " + movieName));
+                .orElseThrow(() -> new MovieNotFoundException("Movie not found: " + name));
     }
 
     public Movie getMovieById(Integer id) {

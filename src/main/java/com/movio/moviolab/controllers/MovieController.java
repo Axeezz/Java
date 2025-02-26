@@ -27,9 +27,9 @@ final class MovieController {
         return movieService.getMovies(genre, year);
     }
 
-    @GetMapping("/movies/withname/{movieName}")
-    public Movie getMovieByMovieName(@PathVariable final String movieName) {
-        return movieService.getMovieByMovieName(movieName);
+    @GetMapping("/movies/withname/{name}")
+    public Movie getMovieByMovieName(@PathVariable final String name) {
+        return movieService.getMovieByMovieName(name);
     }
 
     @GetMapping("/movies/withid/{id}")

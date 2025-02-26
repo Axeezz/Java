@@ -12,14 +12,14 @@ public class Movie {
     public static final String GENRE_CRIME = "Crime";
 
     private final int id;
-    private final String movieName;
+    private final String name;
     private final String genre;
     private final int year;
 
-    public Movie(final int inputId, final String inputMovieName,
+    public Movie(final int inputId, final String inputName,
                  final String inputGenre, final int inputYear) {
         this.id = inputId;
-        this.movieName = inputMovieName;
+        this.name = inputName;
         this.genre = inputGenre;
         this.year = inputYear;
     }
@@ -28,8 +28,8 @@ public class Movie {
         return id;
     }
 
-    public final String getMovieName() {
-        return movieName;
+    public final String getName() {
+        return name;
     }
 
     public final String getGenre() {
