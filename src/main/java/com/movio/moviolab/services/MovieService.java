@@ -2,57 +2,83 @@ package com.movio.moviolab.services;
 
 import com.movio.moviolab.exceptions.MovieNotFoundException;
 import com.movio.moviolab.models.Movie;
+import com.movio.moviolab.repositories.MovieRepository;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class MovieService {
-    private final List<Movie> movies = List.of(
-            new Movie(1, "Inception", Movie.GENRE_SCIFI, 2010),
-            new Movie(2, "Titanic", Movie.GENRE_ROMANCE, 1997),
-            new Movie(3, "Leon: The Professional", Movie.GENRE_ACTION, 1994),
-            new Movie(4, "The Terminator", Movie.GENRE_SCIFI, 1984),
-            new Movie(5, "The Exorcist", Movie.GENRE_HORROR, 1973),
-            new Movie(6, "Lost In Translation", Movie.GENRE_COMEDY, 2003),
-            new Movie(7, "E.T. The Extra Terrestrial", Movie.GENRE_ADVENTURE, 1982),
-            new Movie(8, "In The Mood For Love", Movie.GENRE_DRAMA, 2000),
-            new Movie(9, "Forrest Gump", Movie.GENRE_DRAMA, 1994),
-            new Movie(10, "Spirited Away", Movie.GENRE_ADVENTURE, 2001),
-            new Movie(11, "Ghostbusters", Movie.GENRE_ACTION, 1984),
-            new Movie(12, "The Lord Of The Rings", Movie.GENRE_FANTASY, 2001),
-            new Movie(13, "Back To The Future", Movie.GENRE_ADVENTURE, 1985),
-            new Movie(14, "Brokeback Mountain", Movie.GENRE_DRAMA, 2005),
-            new Movie(15, "Paddington 2", Movie.GENRE_ADVENTURE, 2017),
-            new Movie(16, "The Matrix", Movie.GENRE_SCIFI, 1999),
-            new Movie(17, "Reservoir Dogs", Movie.GENRE_CRIME, 1992),
-            new Movie(18, "The Godfather", Movie.GENRE_CRIME, 1972)
-    );
 
-    public List<Movie> getMovies(String genre, Integer year) {
-        List<Movie> filteredMovies = movies.stream()
-                .filter(movie -> (genre == null
-                        || movie.getGenre().equalsIgnoreCase(genre))
-                        && (year == null || movie.getYear().equals(year)))
-                .toList();
+    private static final String MOVIE_NOT_FOUND_MESSAGE = "Movie not found: ";
 
-        if (filteredMovies.isEmpty()) {
-            throw new MovieNotFoundException("No movies found with the given parameters.");
-        }
+    private final MovieRepository movieRepository;
 
-        return filteredMovies;
+    @Autowired
+    public MovieService(MovieRepository movieRepository) {
+        this.movieRepository = movieRepository;
     }
 
-    public Movie getMovieByMovieName(String name) {
-        return movies.stream()
-                .filter(movie -> movie.getName().equalsIgnoreCase(name))
-                .findFirst()
-                .orElseThrow(() -> new MovieNotFoundException("Movie not found: " + name));
+    public List<Movie> getMovies(String genre, Integer year) {
+        if (genre != null && year != null) {
+            return movieRepository.findByGenreIgnoreCaseAndYear(genre, year);
+        } else if (genre != null) {
+            return movieRepository.findByGenreIgnoreCase(genre);
+        } else if (year != null) {
+            return movieRepository.findByYear(year);
+        } else {
+            return movieRepository.findAll();
+        }
+    }
+
+    public Movie getMovieByTitle(String title) {
+        return movieRepository.findByTitleIgnoreCase(title)
+                .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + title));
     }
 
     public Movie getMovieById(Integer id) {
-        return movies.stream()
-                .filter(movie -> movie.getId().equals(id))
-                .findFirst()
-                .orElseThrow(() -> new MovieNotFoundException("Movie not found: " + id));
+        return movieRepository.findById(id)
+                .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
     }
+
+    public Movie addMovie(Movie movie) {
+        if (movie == null) {
+            throw new IllegalArgumentException("Movie cannot be null");
+        }
+        return movieRepository.save(movie);
+    }
+
+    public void deleteMovieById(Integer id) {
+        if (!movieRepository.existsById(id)) {
+            throw new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id);
+        }
+        movieRepository.deleteById(id);
+    }
+
+    public Movie updateMovie(Integer id, Movie updatedMovie) {
+        return movieRepository.findById(id).map(movie -> {
+            movie.setTitle(updatedMovie.getTitle());
+            movie.setGenre(updatedMovie.getGenre());
+            movie.setYear(updatedMovie.getYear());
+            return movieRepository.save(movie);
+        }).orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
+    }
+
+    public Movie patchMovie(Integer id, Movie partialMovie) {
+        Movie movie = movieRepository.findById(id)
+                .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
+
+        if (partialMovie.getTitle() != null) {
+            movie.setTitle(partialMovie.getTitle());
+        }
+        if (partialMovie.getGenre() != null) {
+            movie.setGenre(partialMovie.getGenre());
+        }
+        if (partialMovie.getYear() != null) {
+            movie.setYear(partialMovie.getYear());
+        }
+
+        return movieRepository.save(movie);
+    }
+
 }

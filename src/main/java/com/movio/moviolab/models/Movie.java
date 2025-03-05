@@ -1,42 +1,57 @@
 package com.movio.moviolab.models;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
+@Entity
 public class Movie {
-    public static final String GENRE_DRAMA = "Drama";
-    public static final String GENRE_ADVENTURE = "Adventure";
-    public static final String GENRE_SCIFI = "Sci-Fi";
-    public static final String GENRE_ROMANCE = "Romance";
-    public static final String GENRE_ACTION = "Action";
-    public static final String GENRE_COMEDY = "Comedy";
-    public static final String GENRE_FANTASY = "Fantasy";
-    public static final String GENRE_HORROR = "Horror";
-    public static final String GENRE_CRIME = "Crime";
 
-    private final int id;
-    private final String name;
-    private final String genre;
-    private final int year;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+    private String title;
+    private String genre;
+    private Integer year;
 
-    public Movie(final int inputId, final String inputName,
-                 final String inputGenre, final int inputYear) {
-        this.id = inputId;
-        this.name = inputName;
-        this.genre = inputGenre;
-        this.year = inputYear;
+    public Movie() {}
+
+    public Movie(String title, String genre, Integer year) {
+        this.title = title;
+        this.genre = genre;
+        this.year = year;
     }
 
-    public final Integer getId() {
+    public Integer getId() {
         return id;
     }
 
-    public final String getName() {
-        return name;
+    public void setId(Integer id) {
+        this.id = id;
     }
 
-    public final String getGenre() {
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getGenre() {
         return genre;
     }
 
-    public final Integer getYear() {
+    public void setGenre(String genre) {
+        this.genre = genre;
+    }
+
+    public Integer getYear() {
         return year;
+    }
+
+    public void setYear(Integer year) {
+        this.year = year;
     }
 }
