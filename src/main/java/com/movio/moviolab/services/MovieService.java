@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class MovieService {
 
+    private static final String MOVIE_ALREADY_EXISTS_MESSAGE =
+            "Movie with the same title, genre, and year already exists: ";
     private static final String MOVIE_NOT_FOUND_MESSAGE = "Movie not found: ";
 
     private final MovieRepository movieRepository;
@@ -19,21 +21,23 @@ public class MovieService {
         this.movieRepository = movieRepository;
     }
 
-    public List<Movie> getMovies(String genre, Integer year) {
-        if (genre != null && year != null) {
-            return movieRepository.findByGenreIgnoreCaseAndYear(genre, year);
+    public List<Movie> getMovies(String genre, Integer year, String title) {
+        if (genre != null && year != null && title != null) {
+            return movieRepository.findByGenreIgnoreCaseAndYearAndTitleIgnoreCase(genre,
+                    year, title);
+        } else if (genre != null && title != null) {
+            return movieRepository.findByGenreIgnoreCaseAndTitleIgnoreCase(genre, title);
+        } else if (year != null && title != null) {
+            return movieRepository.findByYearAndTitleIgnoreCase(year, title);
         } else if (genre != null) {
             return movieRepository.findByGenreIgnoreCase(genre);
         } else if (year != null) {
             return movieRepository.findByYear(year);
+        } else if (title != null) {
+            return movieRepository.findByTitleIgnoreCase(title);
         } else {
             return movieRepository.findAll();
         }
-    }
-
-    public Movie getMovieByTitle(String title) {
-        return movieRepository.findByTitleIgnoreCase(title)
-                .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + title));
     }
 
     public Movie getMovieById(Integer id) {
@@ -44,6 +48,13 @@ public class MovieService {
     public Movie addMovie(Movie movie) {
         if (movie == null) {
             throw new IllegalArgumentException("Movie cannot be null");
+        }
+        List<Movie> existingMovies = movieRepository.findByGenreIgnoreCaseAndYearAndTitleIgnoreCase(
+                movie.getGenre(), movie.getYear(), movie.getTitle());
+
+        if (!existingMovies.isEmpty()) {
+            throw new IllegalArgumentException(MOVIE_ALREADY_EXISTS_MESSAGE
+                    + movie.getTitle() + ", " + movie.getGenre() + ", " + movie.getYear());
         }
         return movieRepository.save(movie);
     }
@@ -80,5 +91,4 @@ public class MovieService {
 
         return movieRepository.save(movie);
     }
-
 }

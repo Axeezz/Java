@@ -11,10 +11,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+
 @RestController
+@RequestMapping("/movies")
 final class MovieController {
 
     private final MovieService movieService;
@@ -24,43 +27,38 @@ final class MovieController {
         this.movieService = movieService;
     }
 
-    @GetMapping("/movies")
+    @GetMapping
     public List<Movie> getMovies(
             @RequestParam(name = "genre", required = false) final String genre,
-            @RequestParam(name = "year", required = false) final Integer year
+            @RequestParam(name = "year", required = false) final Integer year,
+            @RequestParam(name = "title", required = false) final String title
     ) {
-        return movieService.getMovies(genre, year);
+        return movieService.getMovies(genre, year, title);
     }
 
-    @GetMapping("/movies/withname/{title}")
-    public Movie getMovieByMovieName(@PathVariable final String title) {
-        return movieService.getMovieByTitle(title);
-    }
-
-    @GetMapping("/movies/{id}")
+    @GetMapping("/{id}")
     public Movie getMovieById(@PathVariable final Integer id) {
         return movieService.getMovieById(id);
     }
 
     // Метод для обработки POST-запроса на добавление нового фильма
-    @PostMapping("/movies")
+    @PostMapping
     public Movie addMovie(@RequestBody Movie movie) {
         return movieService.addMovie(movie);
     }
 
-    @DeleteMapping("/movies/{id}")
+    @DeleteMapping("/{id}")
     public void deleteMovie(@PathVariable Integer id) {
         movieService.deleteMovieById(id);
     }
 
-    @PutMapping("/movies/{id}")
+    @PutMapping("/{id}")
     public Movie updateMovie(@PathVariable Integer id, @RequestBody Movie updatedMovie) {
         return movieService.updateMovie(id, updatedMovie);
     }
 
-    @PatchMapping("/movies/{id}")
+    @PatchMapping("/{id}")
     public Movie patchMovie(@PathVariable Integer id, @RequestBody Movie partialMovie) {
         return movieService.patchMovie(id, partialMovie);
     }
-
 }
