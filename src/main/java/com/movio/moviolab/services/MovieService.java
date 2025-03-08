@@ -1,7 +1,9 @@
 package com.movio.moviolab.services;
 
 import com.movio.moviolab.exceptions.MovieNotFoundException;
+import com.movio.moviolab.models.Comment;
 import com.movio.moviolab.models.Movie;
+import com.movio.moviolab.repositories.CommentRepository;
 import com.movio.moviolab.repositories.MovieRepository;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +17,12 @@ public class MovieService {
     private static final String MOVIE_NOT_FOUND_MESSAGE = "Movie not found: ";
 
     private final MovieRepository movieRepository;
+    private final CommentRepository commentRepository;
 
     @Autowired
-    public MovieService(MovieRepository movieRepository) {
+    public MovieService(MovieRepository movieRepository, CommentRepository commentRepository) {
         this.movieRepository = movieRepository;
+        this.commentRepository = commentRepository;
     }
 
     public List<Movie> getMovies(String genre, Integer year, String title) {
@@ -43,6 +47,10 @@ public class MovieService {
     public Movie getMovieById(Integer id) {
         return movieRepository.findById(id)
                 .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
+    }
+
+    public List<Comment> getCommentsByMovieId(Integer id) {
+        return commentRepository.findCommentsByMovieId(id);
     }
 
     public Movie addMovie(Movie movie) {

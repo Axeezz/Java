@@ -1,11 +1,8 @@
 package com.movio.moviolab.models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.persistence.*;
+
+import java.util.List;
 
 @Entity
 public class User {
@@ -13,21 +10,15 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    @NotBlank(message = "Name cannot be empty")
+
     private String name;
-    @Email(message = "Invalid email format")
-    @NotBlank(message = "Email cannot be empty")
     private String email;
     private String password;
 
-    public User() {}
+    @OneToMany(mappedBy = "userId", fetch = FetchType.LAZY) // Связь с комментариями, указываем поле в Comment
+    private List<Comment> comments;
 
-    public User(String name, String email, String password) {
-        this.name = name;
-        this.email = email;
-        this.password = password;
-    }
-
+    // Геттеры и сеттеры
     public Integer getId() {
         return id;
     }
@@ -59,4 +50,12 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
+
+//    public List<Comment> getComments() {
+//        return comments;
+//    }
+//
+//    public void setComments(List<Comment> comments) {
+//        this.comments = comments;
+//    }
 }

@@ -1,9 +1,12 @@
 package com.movio.moviolab.models;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import java.util.List;
 
 @Entity
 public class Movie {
@@ -15,14 +18,11 @@ public class Movie {
     private String genre;
     private Integer year;
 
-    public Movie() {}
+    @OneToMany(mappedBy = "movieId",
+            fetch = FetchType.LAZY) // Связь с комментариями, указываем поле в Comment
+    private List<Comment> comments;
 
-    public Movie(String title, String genre, Integer year) {
-        this.title = title;
-        this.genre = genre;
-        this.year = year;
-    }
-
+    // Геттеры и сеттеры
     public Integer getId() {
         return id;
     }
@@ -54,4 +54,12 @@ public class Movie {
     public void setYear(Integer year) {
         this.year = year;
     }
+
+   public List<Comment> getComments() {
+       return comments;
+   }
+
+   public void setComments(List<Comment> comments) {
+       this.comments = comments;
+   }
 }

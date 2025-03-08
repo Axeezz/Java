@@ -1,5 +1,6 @@
 package com.movio.moviolab.controllers;
 
+import com.movio.moviolab.models.Comment;
 import com.movio.moviolab.models.Movie;
 import com.movio.moviolab.services.MovieService;
 import java.util.List;
@@ -39,6 +40,11 @@ final class MovieController {
     @GetMapping("/{id}")
     public Movie getMovieById(@PathVariable final Integer id) {
         return movieService.getMovieById(id);
+    }
+
+    @GetMapping("/comments/{id}")
+    public List<Comment> getCommentsByMovieId(@PathVariable final Integer id) {
+        return movieService.getCommentsByMovieId(id);
     }
 
     // Метод для обработки POST-запроса на добавление нового фильма
