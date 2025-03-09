@@ -16,10 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-
 @RestController
 @RequestMapping("/movies")
-final class MovieController {
+public class MovieController {
 
     private final MovieService movieService;
 
@@ -47,7 +46,6 @@ final class MovieController {
         return movieService.getCommentsByMovieId(id);
     }
 
-    // Метод для обработки POST-запроса на добавление нового фильма
     @PostMapping
     public Movie addMovie(@RequestBody Movie movie) {
         return movieService.addMovie(movie);

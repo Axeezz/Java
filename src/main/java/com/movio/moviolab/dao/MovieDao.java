@@ -1,0 +1,63 @@
+package com.movio.moviolab.dao;
+
+import com.movio.moviolab.models.Movie;
+import com.movio.moviolab.repositories.MovieRepository;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class MovieDao {
+
+    private final MovieRepository movieRepository;
+
+    @Autowired
+    public MovieDao(MovieRepository movieRepository) {
+        this.movieRepository = movieRepository;
+    }
+
+    public List<Movie> findAll() {
+        return movieRepository.findAll();
+    }
+
+    public Optional<Movie> findById(Integer id) {
+        return movieRepository.findById(id);
+    }
+
+    public List<Movie> findByGenre(String genre) {
+        return movieRepository.findByGenreIgnoreCase(genre);
+    }
+
+    public List<Movie> findByYear(Integer year) {
+        return movieRepository.findByYear(year);
+    }
+
+    public List<Movie> findByTitle(String title) {
+        return movieRepository.findByTitleIgnoreCase(title);
+    }
+
+    public List<Movie> findByGenreAndYearAndTitle(String genre, Integer year, String title) {
+        return movieRepository.findByGenreIgnoreCaseAndYearAndTitleIgnoreCase(genre, year, title);
+    }
+
+    public List<Movie> findByGenreAndTitle(String genre, String title) {
+        return movieRepository.findByGenreIgnoreCaseAndTitleIgnoreCase(genre, title);
+    }
+
+    public List<Movie> findByYearAndTitle(Integer year, String title) {
+        return movieRepository.findByYearAndTitleIgnoreCase(year, title);
+    }
+
+    public Movie save(Movie movie) {
+        return movieRepository.save(movie);
+    }
+
+    public void deleteById(Integer id) {
+        movieRepository.deleteById(id);
+    }
+
+    public boolean existsById(Integer id) {
+        return movieRepository.existsById(id);
+    }
+}

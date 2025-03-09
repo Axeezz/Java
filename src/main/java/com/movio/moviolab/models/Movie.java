@@ -1,5 +1,6 @@
 package com.movio.moviolab.models;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -19,7 +20,8 @@ public class Movie {
     private Integer year;
 
     @OneToMany(mappedBy = "movieId",
-            fetch = FetchType.LAZY) // Связь с комментариями, указываем поле в Comment
+            fetch = FetchType.LAZY, cascade = CascadeType.ALL,
+            orphanRemoval = true) // Связь с комментариями, указываем поле в Comment
     private List<Comment> comments;
 
     // Геттеры и сеттеры
@@ -53,5 +55,9 @@ public class Movie {
 
     public void setYear(Integer year) {
         this.year = year;
+    }
+
+    public List<Comment> getComments() {
+        return comments;
     }
 }

@@ -37,12 +37,12 @@ public class Comment {
         return userId;
     }
 
-    public void setUserId(Integer userId) {
-        this.userId = userId;
-    }
-
     public Integer getMovieId() {
         return movieId;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
     }
 
     public void setMovieId(Integer movieId) {

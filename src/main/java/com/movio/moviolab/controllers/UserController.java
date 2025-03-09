@@ -23,7 +23,6 @@ public class UserController {
 
     private final UserService userService;
 
-
     @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
@@ -42,7 +41,7 @@ public class UserController {
     }
 
     @GetMapping("/comments/{id}")
-    public List<Comment> getCommentsByMovieId(@PathVariable final Integer id) {
+    public List<Comment> getCommentsByUserId(@PathVariable final Integer id) {
         return userService.getCommentsByUserId(id);
     }
 

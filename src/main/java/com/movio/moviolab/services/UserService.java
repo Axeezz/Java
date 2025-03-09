@@ -1,10 +1,10 @@
 package com.movio.moviolab.services;
 
+import com.movio.moviolab.dao.UserDao;
+import com.movio.moviolab.exceptions.MovieNotFoundException;
 import com.movio.moviolab.exceptions.UserNotFoundException;
 import com.movio.moviolab.models.Comment;
 import com.movio.moviolab.models.User;
-import com.movio.moviolab.repositories.CommentRepository;
-import com.movio.moviolab.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,62 +17,60 @@ public class UserService {
     private static final String USER_ALREADY_EXISTS_MESSAGE =
             "User with this name or email already exists: ";
 
-    private final UserRepository userRepository;
-    private final CommentRepository commentRepository;
+    private final UserDao userDao;
 
     @Autowired
-    public UserService(UserRepository userRepository, CommentRepository commentRepository) {
-        this.userRepository = userRepository;
-        this.commentRepository = commentRepository;
+    public UserService(UserDao userDao) {
+        this.userDao = userDao;
     }
 
     public List<User> getUsers(String name, String email) {
         if (name != null && email != null) {
-            return userRepository.findByNameIgnoreCaseAndEmailIgnoreCase(name, email);
+            return userDao.findByNameIgnoreCaseAndEmailIgnoreCase(name, email);
         } else if (name != null) {
-            return userRepository.findByNameIgnoreCase(name);
+            return userDao.findByNameIgnoreCase(name);
         } else if (email != null) {
-            return userRepository.findByEmailIgnoreCase(email);
+            return userDao.findByEmailIgnoreCase(email);
         } else {
-            return userRepository.findAll();
+            return userDao.findAll();
         }
     }
 
     public User getUserById(Integer id) {
-        return userRepository.findById(id)
+        return userDao.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id));
     }
 
     public User addUser(User user) {
-        if (!userRepository.findByNameIgnoreCase(user.getName()).isEmpty()) {
+        if (!userDao.findByNameIgnoreCase(user.getName()).isEmpty()) {
             throw new IllegalArgumentException(USER_ALREADY_EXISTS_MESSAGE + user.getName());
         }
-        if (!userRepository.findByEmailIgnoreCase(user.getEmail()).isEmpty()) {
+        if (!userDao.findByEmailIgnoreCase(user.getEmail()).isEmpty()) {
             throw new IllegalArgumentException(USER_ALREADY_EXISTS_MESSAGE + user.getEmail());
         }
-        return userRepository.save(user);
+        return userDao.save(user);
     }
 
     @Transactional
     public void deleteUserById(Integer id) {
-        if (!userRepository.existsById(id)) {
+        if (!userDao.existsById(id)) {
             throw new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id);
         }
-        userRepository.deleteById(id);
+        userDao.deleteById(id);
     }
 
     @Transactional
     public User updateUser(Integer id, User updatedUser) {
-        return userRepository.findById(id).map(user -> {
+        return userDao.findById(id).map(user -> {
             user.setName(updatedUser.getName());
             user.setEmail(updatedUser.getEmail());
             user.setPassword(updatedUser.getPassword());
-            return userRepository.save(user);
+            return userDao.save(user);
         }).orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id));
     }
 
     public User patchUser(Integer id, User partialUser) {
-        User user = userRepository.findById(id)
+        User user = userDao.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id));
 
         if (partialUser.getName() != null) {
@@ -85,10 +83,12 @@ public class UserService {
             user.setPassword(partialUser.getPassword());
         }
 
-        return userRepository.save(user);
+        return userDao.save(user);
     }
 
     public List<Comment> getCommentsByUserId(Integer id) {
-        return commentRepository.findCommentsByUserId(id);
+        User user = userDao.findById(id).orElseThrow(()
+                -> new MovieNotFoundException(USER_NOT_FOUND_MESSAGE + id));
+        return user.getComments();
     }
 }

@@ -18,5 +18,4 @@ public interface MovieRepository extends JpaRepository<Movie, Integer> {
 
     List<Movie> findByGenreIgnoreCaseAndYearAndTitleIgnoreCase(String genre,
                                                                Integer year, String title);
-
 }

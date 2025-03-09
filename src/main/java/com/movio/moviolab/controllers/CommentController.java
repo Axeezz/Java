@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -27,8 +26,10 @@ public class CommentController {
 
     // Method to add a new comment
     @PostMapping
-    public Comment addComment(@RequestParam Integer userId,
-                              @RequestParam Integer movieId, @RequestBody Comment comment) {
+    public Comment addComment(@RequestBody Comment comment) {
+        Integer userId = comment.getUserId(); // Получаем userId из тела запроса
+        Integer movieId = comment.getMovieId(); // Получаем movieId из тела запроса
+        // Логика для обработки комментария
         return commentService.addComment(userId, movieId, comment);
     }
 
