@@ -5,6 +5,7 @@ import com.movio.moviolab.models.Comment;
 import com.movio.moviolab.models.User;
 import com.movio.moviolab.repositories.CommentRepository;
 import com.movio.moviolab.repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -52,6 +53,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @Transactional
     public void deleteUserById(Integer id) {
         if (!userRepository.existsById(id)) {
             throw new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id);
@@ -59,6 +61,7 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+    @Transactional
     public User updateUser(Integer id, User updatedUser) {
         return userRepository.findById(id).map(user -> {
             user.setName(updatedUser.getName());
