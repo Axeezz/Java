@@ -1,7 +1,9 @@
 package com.movio.moviolab.services;
 
 import com.movio.moviolab.exceptions.UserNotFoundException;
+import com.movio.moviolab.models.Comment;
 import com.movio.moviolab.models.User;
+import com.movio.moviolab.repositories.CommentRepository;
 import com.movio.moviolab.repositories.UserRepository;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +17,12 @@ public class UserService {
             "User with this name or email already exists: ";
 
     private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, CommentRepository commentRepository) {
         this.userRepository = userRepository;
+        this.commentRepository = commentRepository;
     }
 
     public List<User> getUsers(String name, String email) {
@@ -79,5 +83,9 @@ public class UserService {
         }
 
         return userRepository.save(user);
+    }
+
+    public List<Comment> getCommentsByUserId(Integer id) {
+        return commentRepository.findCommentsByUserId(id);
     }
 }

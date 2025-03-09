@@ -1,5 +1,6 @@
 package com.movio.moviolab.controllers;
 
+import com.movio.moviolab.models.Comment;
 import com.movio.moviolab.models.User;
 import com.movio.moviolab.services.UserService;
 import jakarta.validation.Valid;
@@ -22,6 +23,7 @@ public class UserController {
 
     private final UserService userService;
 
+
     @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
@@ -37,6 +39,11 @@ public class UserController {
     @GetMapping("/{id}")
     public User getUserById(@PathVariable Integer id) {
         return userService.getUserById(id);
+    }
+
+    @GetMapping("/comments/{id}")
+    public List<Comment> getCommentsByMovieId(@PathVariable final Integer id) {
+        return userService.getCommentsByUserId(id);
     }
 
     @PostMapping

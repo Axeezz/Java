@@ -54,12 +54,4 @@ public class Movie {
     public void setYear(Integer year) {
         this.year = year;
     }
-
-   public List<Comment> getComments() {
-       return comments;
-   }
-
-   public void setComments(List<Comment> comments) {
-       this.comments = comments;
-   }
 }
