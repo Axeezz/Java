@@ -1,13 +1,17 @@
 package com.movio.moviolab.services;
 
-import com.movio.moviolab.dao.CommentDao;
 import com.movio.moviolab.dao.MovieDao;
 import com.movio.moviolab.exceptions.MovieNotFoundException;
 import com.movio.moviolab.models.Comment;
 import com.movio.moviolab.models.Movie;
+import com.movio.moviolab.models.User;
+import com.movio.moviolab.repositories.MovieRepository;
+import com.movio.moviolab.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 
@@ -19,29 +23,26 @@ public class MovieService {
     private static final String MOVIE_NOT_FOUND_MESSAGE = "Movie not found: ";
 
     private final MovieDao movieDao;
+    private final MovieRepository movieRepository;
+    private final UserRepository userRepository;
 
     @Autowired
-    public MovieService(com.movio.moviolab.dao.MovieDao movieDao) {
+    public MovieService(com.movio.moviolab.dao.MovieDao movieDao,
+                        MovieRepository movieRepository, UserRepository userRepository) {
         this.movieDao = movieDao;
+        this.movieRepository = movieRepository;
+        this.userRepository = userRepository;
     }
 
     public List<Movie> getMovies(String genre, Integer year, String title) {
-        if (genre != null && year != null && title != null) {
-            return movieDao.findByGenreAndYearAndTitle(genre, year, title);
-        } else if (genre != null && title != null) {
-            return movieDao.findByGenreAndTitle(genre, title);
-        } else if (year != null && title != null) {
-            return movieDao.findByYearAndTitle(year, title);
-        } else if (genre != null) {
-            return movieDao.findByGenre(genre);
-        } else if (year != null) {
-            return movieDao.findByYear(year);
-        } else if (title != null) {
-            return movieDao.findByTitle(title);
-        } else {
-            return movieDao.findAll();
-        }
+        return movieDao.findAll().stream()
+                .filter(movie -> genre == null || movie.getGenre().equals(genre))
+                .filter(movie -> year == null || movie.getYear().equals(year))
+                .filter(movie -> title == null || movie.getTitle().equalsIgnoreCase(title))
+                .toList();  // Using Stream.toList() instead of collect(Collectors.toList())
     }
+
+
 
     public Movie getMovieById(Integer id) {
         return movieDao.findById(id)
@@ -72,13 +73,18 @@ public class MovieService {
 
     @Transactional
     public Movie updateMovie(Integer id, Movie updatedMovie) {
-        return movieDao.findById(id).map(movie -> {
-            movie.setTitle(updatedMovie.getTitle());
-            movie.setGenre(updatedMovie.getGenre());
-            movie.setYear(updatedMovie.getYear());
-            return movieDao.save(movie);
-        }).orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
+        Movie movie = movieDao.findById(id)
+                .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
+
+        // Обновление полей
+        movie.setTitle(updatedMovie.getTitle());
+        movie.setGenre(updatedMovie.getGenre());
+        movie.setYear(updatedMovie.getYear());
+
+        // Не нужно вызывать save(), если объект уже отслеживается
+        return movie;
     }
+
 
     public Movie patchMovie(Integer id, Movie partialMovie) {
         Movie movie = movieDao.findById(id)
@@ -102,4 +108,44 @@ public class MovieService {
                 -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
         return movie.getComments();
     }
+
+    public ResponseEntity<Void> addUserToMovie(Integer movieId, Integer userId) {
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new RuntimeException(MOVIE_NOT_FOUND_MESSAGE + movieId));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        movie.getUsers().add(user);
+        user.getMovies().add(movie);
+
+        movieRepository.save(movie);
+        userRepository.save(user);
+
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    public ResponseEntity<Void> removeUserFromMovie(Integer movieId, Integer userId) {
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new RuntimeException(MOVIE_NOT_FOUND_MESSAGE + movieId));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        movie.getUsers().remove(user);
+        user.getMovies().remove(movie);
+
+        movieRepository.save(movie);
+        userRepository.save(user);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    public List<User> getUsersForMovie(Integer movieId) {
+        // Find the movie by its ID, or throw an exception if not found
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new RuntimeException("Movie not found with id: " + movieId));
+
+        // Return the set of users associated with this movie
+        return movie.getUsers();  // Assuming getUsers() returns a Set<User>
+    }
+
 }

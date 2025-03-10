@@ -2,9 +2,11 @@ package com.movio.moviolab.controllers;
 
 import com.movio.moviolab.models.Comment;
 import com.movio.moviolab.models.Movie;
+import com.movio.moviolab.models.User;
 import com.movio.moviolab.services.MovieService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -65,4 +67,29 @@ public class MovieController {
     public Movie patchMovie(@PathVariable Integer id, @RequestBody Movie partialMovie) {
         return movieService.patchMovie(id, partialMovie);
     }
+
+    @PostMapping("/{movieId}/users/{userId}")
+    public ResponseEntity<Void> addUserToMovie(@PathVariable Integer movieId,
+                                               @PathVariable Integer userId) {
+        return movieService.addUserToMovie(movieId, userId);
+
+    }
+
+    // Удалить пользователя из фильма
+    @DeleteMapping("/{movieId}/users/{userId}")
+    public ResponseEntity<Void> removeUserFromMovie(@PathVariable Integer movieId,
+                                                    @PathVariable Integer userId) {
+        return movieService.removeUserFromMovie(movieId, userId);
+    }
+
+    // Получить всех пользователей фильма
+    @GetMapping("/{movieId}/users")
+    public ResponseEntity<List<User>> getUsersForMovie(@PathVariable Integer movieId) {
+        // Fetch the users associated with the movie from the service layer
+        List<User> users = movieService.getUsersForMovie(movieId);
+
+        // Return the users wrapped in a ResponseEntity with status OK
+        return ResponseEntity.ok(users);
+    }
+
 }

@@ -61,13 +61,18 @@ public class UserService {
 
     @Transactional
     public User updateUser(Integer id, User updatedUser) {
-        return userDao.findById(id).map(user -> {
-            user.setName(updatedUser.getName());
-            user.setEmail(updatedUser.getEmail());
-            user.setPassword(updatedUser.getPassword());
-            return userDao.save(user);
-        }).orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id));
+        User user = userDao.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id));
+
+        // Обновление полей пользователя
+        user.setName(updatedUser.getName());
+        user.setEmail(updatedUser.getEmail());
+        user.setPassword(updatedUser.getPassword());
+
+        // Сохранение изменений (не обязательно при работе с JPA, если сущность отслеживается)
+        return user;  // После завершения транзакции, изменения будут автоматически сохранены
     }
+
 
     public User patchUser(Integer id, User partialUser) {
         User user = userDao.findById(id)
