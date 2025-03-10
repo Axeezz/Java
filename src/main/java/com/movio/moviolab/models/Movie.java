@@ -1,12 +1,6 @@
 package com.movio.moviolab.models;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import java.util.List;
 
 @Entity
@@ -19,9 +13,8 @@ public class Movie {
     private String genre;
     private Integer year;
 
-    @OneToMany(mappedBy = "movieId",
-            fetch = FetchType.LAZY, cascade = CascadeType.ALL,
-            orphanRemoval = true) // Связь с комментариями, указываем поле в Comment
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL,
+            orphanRemoval = true)
     private List<Comment> comments;
 
     // Геттеры и сеттеры
@@ -59,5 +52,9 @@ public class Movie {
 
     public List<Comment> getComments() {
         return comments;
+    }
+
+    public void setComments(List<Comment> comments) {
+        this.comments = comments;
     }
 }

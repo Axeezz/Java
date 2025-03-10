@@ -20,9 +20,8 @@ public class User {
     private String email;
     private String password;
 
-    @OneToMany(mappedBy = "userId",
-            fetch = FetchType.LAZY, cascade = CascadeType.ALL,
-            orphanRemoval = true) // Связь с комментариями, указываем поле в Comment
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL,
+            orphanRemoval = true)
     private List<Comment> comments;
 
     // Геттеры и сеттеры
@@ -60,5 +59,9 @@ public class User {
 
     public List<Comment> getComments() {
         return comments;
+    }
+
+    public void setComments(List<Comment> comments) {
+        this.comments = comments;
     }
 }
