@@ -24,34 +24,26 @@ public class CommentController {
         this.commentService = commentService;
     }
 
-    // Method to add a new comment
     @PostMapping
     public Comment addComment(@RequestBody Comment comment) {
-        Integer userId = comment.getUserId(); // Получаем userId из тела запроса
-        Integer movieId = comment.getMovieId(); // Получаем movieId из тела запроса
-        // Логика для обработки комментария
-        return commentService.addComment(userId, movieId, comment);
+        return commentService.addComment(comment);
     }
 
-    // Method to get all comments (can be customized as needed)
     @GetMapping
     public List<Comment> getAllComments() {
         return commentService.getAllComments();
     }
 
-    // Method to get a specific comment by its ID
     @GetMapping("/{id}")
     public Comment getCommentById(@PathVariable Integer id) {
         return commentService.getCommentById(id);
     }
 
-    // Method to update a specific comment (partial update)
     @PatchMapping("/{id}")
     public Comment patchComment(@PathVariable Integer id, @RequestBody Comment partialComment) {
         return commentService.updateComment(id, partialComment);
     }
 
-    // Method to delete a specific comment
     @DeleteMapping("/{id}")
     public void deleteComment(@PathVariable Integer id) {
         commentService.deleteComment(id);

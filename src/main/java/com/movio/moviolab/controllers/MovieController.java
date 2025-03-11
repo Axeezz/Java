@@ -85,11 +85,8 @@ public class MovieController {
     // Получить всех пользователей фильма
     @GetMapping("/{movieId}/users")
     public ResponseEntity<List<User>> getUsersForMovie(@PathVariable Integer movieId) {
-        // Fetch the users associated with the movie from the service layer
-        List<User> users = movieService.getUsersForMovie(movieId);
-
-        // Return the users wrapped in a ResponseEntity with status OK
-        return ResponseEntity.ok(users);
+        // Возвращаем результат из метода сервиса прямо в ResponseEntity
+        return ResponseEntity.ok(movieService.getUsersForMovie(movieId));
     }
 
 }

@@ -1,67 +1,54 @@
 package com.movio.moviolab.dao;
 
 import com.movio.moviolab.models.User;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.transaction.Transactional;
+import com.movio.moviolab.repositories.UserRepository;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public class UserDao {
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    private final UserRepository userRepository;
+
+    @Autowired
+    public UserDao(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     public List<User> findAll() {
-        return entityManager.createQuery("SELECT u FROM User u", User.class)
-                .getResultList();
+        return userRepository.findAll();
     }
 
     public Optional<User> findById(Integer id) {
-        User user = entityManager.find(User.class, id);
-        return Optional.ofNullable(user);
+        return userRepository.findById(id);
     }
 
     public List<User> findByNameIgnoreCase(String name) {
-        return entityManager.createQuery("SELECT u FROM User u WHERE LOWER(u.name) = LOWER(:name)",
-                        User.class)
-                .setParameter("name", name)
-                .getResultList();
+        return userRepository.findByNameIgnoreCase(name);
     }
 
     public List<User> findByEmailIgnoreCase(String email) {
-        return entityManager.createQuery("SELECT u FROM User u"
-                        + " WHERE LOWER(u.email) = LOWER(:email)", User.class)
-                .setParameter("email", email)
-                .getResultList();
+        return userRepository.findByEmailIgnoreCase(email);
     }
 
     public List<User> findByNameIgnoreCaseAndEmailIgnoreCase(String name, String email) {
-        return entityManager.createQuery("SELECT u FROM User u WHERE LOWER(u.name) = LOWER(:name)"
-                        + "AND LOWER(u.email) = LOWER(:email)", User.class)
-                .setParameter("name", name).setParameter("email", email).getResultList();
+        return userRepository.findByNameIgnoreCaseAndEmailIgnoreCase(name, email);
     }
 
     public boolean existsById(Integer id) {
-        return findById(id).isPresent();
+        return userRepository.existsById(id);
     }
 
     @Transactional
     public User save(User user) {
-        if (user.getId() == null) {
-            entityManager.persist(user);  // для новых пользователей
-            return user;
-        } else {
-            return entityManager.merge(user);  // для обновленных пользователей
-        }
+        return userRepository.save(user);
     }
 
     @Transactional
     public void deleteById(Integer id) {
-        Optional<User> user = findById(id);
-        user.ifPresent(entityManager::remove);  // Если пользователь найден, удаляем его
+        userRepository.deleteById(id);
     }
 }
-

@@ -36,13 +36,11 @@ public class MovieService {
 
     public List<Movie> getMovies(String genre, Integer year, String title) {
         return movieDao.findAll().stream()
-                .filter(movie -> genre == null || movie.getGenre().equals(genre))
+                .filter(movie -> genre == null || movie.getGenre().equalsIgnoreCase(genre))
                 .filter(movie -> year == null || movie.getYear().equals(year))
                 .filter(movie -> title == null || movie.getTitle().equalsIgnoreCase(title))
                 .toList();  // Using Stream.toList() instead of collect(Collectors.toList())
     }
-
-
 
     public Movie getMovieById(Integer id) {
         return movieDao.findById(id)
@@ -113,7 +111,7 @@ public class MovieService {
         Movie movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> new RuntimeException(MOVIE_NOT_FOUND_MESSAGE + movieId));
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
 
         movie.getUsers().add(user);
         user.getMovies().add(movie);

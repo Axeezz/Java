@@ -28,7 +28,7 @@ public class User {
             orphanRemoval = true)
     private List<Comment> comments;
 
-    @ManyToMany(mappedBy = "users")
+    @ManyToMany(mappedBy = "users", cascade = { CascadeType.PERSIST, CascadeType.MERGE})
     private Set<Movie> movies = new HashSet<>();
 
     // Геттеры и сеттеры
