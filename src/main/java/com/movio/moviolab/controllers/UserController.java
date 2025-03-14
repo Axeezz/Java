@@ -1,7 +1,7 @@
 package com.movio.moviolab.controllers;
 
-import com.movio.moviolab.models.Comment;
-import com.movio.moviolab.models.User;
+import com.movio.moviolab.dto.CommentDto;
+import com.movio.moviolab.dto.UserDto;
 import com.movio.moviolab.services.UserService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -30,26 +30,26 @@ public class UserController {
     }
 
     @GetMapping
-    public List<User> getUsers(
+    public List<UserDto> getUsers(
             @RequestParam(name = "name", required = false) String name,
             @RequestParam(name = "email", required = false) String email) {
         return userService.getUsers(name, email);
     }
 
     @GetMapping("/{id}")
-    public User getUserById(@PathVariable Integer id) {
+    public UserDto getUserById(@PathVariable Integer id) {
         return userService.getUserById(id);
     }
 
-    @GetMapping("/comments/{id}")
-    public List<Comment> getCommentsByUserId(@PathVariable final Integer id) {
+    @GetMapping("/{id}/comments")
+    public List<CommentDto> getCommentsByUserId(@PathVariable final Integer id) {
         return userService.getCommentsByUserId(id);
     }
 
     @PostMapping
-    public User addUser(@Valid @RequestBody User user) {
+    public UserDto addUser(@Valid @RequestBody UserDto userDto) {
         try {
-            return userService.addUser(user);
+            return userService.addUser(userDto);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(e.getMessage());
         }
@@ -61,12 +61,13 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public User updateUser(@Valid @PathVariable Integer id, @RequestBody User updatedUser) {
-        return userService.updateUser(id, updatedUser);
+    public UserDto updateUser(@Valid @PathVariable Integer id,
+                              @RequestBody UserDto updatedUserDto) {
+        return userService.updateUser(id, updatedUserDto);
     }
 
     @PatchMapping("/{id}")
-    public User patchUser(@Valid @PathVariable Integer id, @RequestBody User partialUser) {
-        return userService.patchUser(id, partialUser);
+    public UserDto patchUser(@Valid @PathVariable Integer id, @RequestBody UserDto partialUserDto) {
+        return userService.patchUser(id, partialUserDto);
     }
 }

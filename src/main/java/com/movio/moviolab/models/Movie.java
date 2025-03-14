@@ -24,11 +24,11 @@ public class Movie {
     private String genre;
     private Integer year;
 
-    @OneToMany(mappedBy = "movieId", fetch = FetchType.LAZY, cascade = CascadeType.ALL,
-            orphanRemoval = true)
+    @OneToMany(mappedBy = "movieId", fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments;
 
-    @ManyToMany (cascade = { CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToMany (cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @JsonIgnore
     @JoinTable(name = "movie_user",
             joinColumns = @JoinColumn(name = "movie_id"),
@@ -36,7 +36,6 @@ public class Movie {
     )
     private List<User> users = new ArrayList<>();
 
-    // Геттеры и сеттеры
     public Integer getId() {
         return id;
     }

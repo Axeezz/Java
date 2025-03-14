@@ -25,28 +25,8 @@ public class MovieDao {
         return movieRepository.findById(id);
     }
 
-    public List<Movie> findByGenre(String genre) {
-        return movieRepository.findByGenreIgnoreCase(genre);
-    }
-
-    public List<Movie> findByYear(Integer year) {
-        return movieRepository.findByYear(year);
-    }
-
-    public List<Movie> findByTitle(String title) {
-        return movieRepository.findByTitleIgnoreCase(title);
-    }
-
     public List<Movie> findByGenreAndYearAndTitle(String genre, Integer year, String title) {
         return movieRepository.findByGenreIgnoreCaseAndYearAndTitleIgnoreCase(genre, year, title);
-    }
-
-    public List<Movie> findByGenreAndTitle(String genre, String title) {
-        return movieRepository.findByGenreIgnoreCaseAndTitleIgnoreCase(genre, title);
-    }
-
-    public List<Movie> findByYearAndTitle(Integer year, String title) {
-        return movieRepository.findByYearAndTitleIgnoreCase(year, title);
     }
 
     public Movie save(Movie movie) {

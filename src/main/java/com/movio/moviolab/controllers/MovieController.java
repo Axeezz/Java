@@ -1,8 +1,8 @@
 package com.movio.moviolab.controllers;
 
-import com.movio.moviolab.models.Comment;
-import com.movio.moviolab.models.Movie;
-import com.movio.moviolab.models.User;
+import com.movio.moviolab.dto.CommentDto;
+import com.movio.moviolab.dto.MovieDto;
+import com.movio.moviolab.dto.UserDto;
 import com.movio.moviolab.services.MovieService;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ public class MovieController {
     }
 
     @GetMapping
-    public List<Movie> getMovies(
+    public List<MovieDto> getMovies(
             @RequestParam(name = "genre", required = false) final String genre,
             @RequestParam(name = "year", required = false) final Integer year,
             @RequestParam(name = "title", required = false) final String title
@@ -39,18 +39,18 @@ public class MovieController {
     }
 
     @GetMapping("/{id}")
-    public Movie getMovieById(@PathVariable final Integer id) {
+    public MovieDto getMovieById(@PathVariable final Integer id) {
         return movieService.getMovieById(id);
     }
 
-    @GetMapping("/comments/{id}")
-    public List<Comment> getCommentsByMovieId(@PathVariable final Integer id) {
+    @GetMapping("/{id}/comments")
+    public List<CommentDto> getCommentsByMovieId(@PathVariable final Integer id) {
         return movieService.getCommentsByMovieId(id);
     }
 
     @PostMapping
-    public Movie addMovie(@RequestBody Movie movie) {
-        return movieService.addMovie(movie);
+    public MovieDto addMovie(@RequestBody MovieDto movieDto) {
+        return movieService.addMovie(movieDto);
     }
 
     @DeleteMapping("/{id}")
@@ -59,34 +59,29 @@ public class MovieController {
     }
 
     @PutMapping("/{id}")
-    public Movie updateMovie(@PathVariable Integer id, @RequestBody Movie updatedMovie) {
-        return movieService.updateMovie(id, updatedMovie);
+    public MovieDto updateMovie(@PathVariable Integer id, @RequestBody MovieDto updatedMovieDto) {
+        return movieService.updateMovie(id, updatedMovieDto);
     }
 
     @PatchMapping("/{id}")
-    public Movie patchMovie(@PathVariable Integer id, @RequestBody Movie partialMovie) {
-        return movieService.patchMovie(id, partialMovie);
+    public MovieDto patchMovie(@PathVariable Integer id, @RequestBody MovieDto partialMovieDto) {
+        return movieService.patchMovie(id, partialMovieDto);
     }
 
     @PostMapping("/{movieId}/users/{userId}")
-    public ResponseEntity<Void> addUserToMovie(@PathVariable Integer movieId,
+    public ResponseEntity<String> addUserToMovie(@PathVariable Integer movieId,
                                                @PathVariable Integer userId) {
         return movieService.addUserToMovie(movieId, userId);
-
     }
 
-    // Удалить пользователя из фильма
     @DeleteMapping("/{movieId}/users/{userId}")
     public ResponseEntity<Void> removeUserFromMovie(@PathVariable Integer movieId,
                                                     @PathVariable Integer userId) {
         return movieService.removeUserFromMovie(movieId, userId);
     }
 
-    // Получить всех пользователей фильма
     @GetMapping("/{movieId}/users")
-    public ResponseEntity<List<User>> getUsersForMovie(@PathVariable Integer movieId) {
-        // Возвращаем результат из метода сервиса прямо в ResponseEntity
+    public ResponseEntity<List<UserDto>> getUsersForMovie(@PathVariable Integer movieId) {
         return ResponseEntity.ok(movieService.getUsersForMovie(movieId));
     }
-
 }

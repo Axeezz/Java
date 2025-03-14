@@ -2,7 +2,9 @@ package com.movio.moviolab.services;
 
 import com.movio.moviolab.dao.MovieDao;
 import com.movio.moviolab.dao.UserDao;
-import com.movio.moviolab.exceptions.MovieNotFoundException;
+import com.movio.moviolab.dto.CommentDto;
+import com.movio.moviolab.dto.MovieDto;
+import com.movio.moviolab.dto.UserDto;
 import com.movio.moviolab.exceptions.UserNotFoundException;
 import com.movio.moviolab.models.Comment;
 import com.movio.moviolab.models.Movie;
@@ -29,31 +31,35 @@ public class UserService {
         this.movieDao = movieDao;
     }
 
-    public List<User> getUsers(String name, String email) {
+    public List<UserDto> getUsers(String name, String email) {
+        List<User> users;
         if (name != null && email != null) {
-            return userDao.findByNameIgnoreCaseAndEmailIgnoreCase(name, email);
+            users = userDao.findByNameIgnoreCaseAndEmailIgnoreCase(name, email);
         } else if (name != null) {
-            return userDao.findByNameIgnoreCase(name);
+            users = userDao.findByNameIgnoreCase(name);
         } else if (email != null) {
-            return userDao.findByEmailIgnoreCase(email);
+            users = userDao.findByEmailIgnoreCase(email);
         } else {
-            return userDao.findAll();
+            users = userDao.findAll();
         }
+        return users.stream().map(this::convertToDto).toList();
     }
 
-    public User getUserById(Integer id) {
-        return userDao.findById(id)
+    public UserDto getUserById(Integer id) {
+        User user = userDao.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id));
+        return convertToDto(user);
     }
 
-    public User addUser(User user) {
+    public UserDto addUser(UserDto userDto) {
+        User user = convertToEntity(userDto);
         if (!userDao.findByNameIgnoreCase(user.getName()).isEmpty()) {
             throw new IllegalArgumentException(USER_ALREADY_EXISTS_MESSAGE + user.getName());
         }
         if (!userDao.findByEmailIgnoreCase(user.getEmail()).isEmpty()) {
             throw new IllegalArgumentException(USER_ALREADY_EXISTS_MESSAGE + user.getEmail());
         }
-        return userDao.save(user);
+        return convertToDto(userDao.save(user));
     }
 
     @Transactional
@@ -61,55 +67,98 @@ public class UserService {
         User user = userDao.findById(id)
                 .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND_MESSAGE + id));
 
-        // Удаление связей с фильмами: обнуляем поле movies у каждого фильма
         for (Movie movie : user.getMovies()) {
             movie.getUsers().remove(user);
-            movieDao.save(movie); // Сохраняем изменения в фильмах
+            movieDao.save(movie);
         }
 
-        // Удаление пользователя
         userDao.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
-
-
-
     @Transactional
-    public User updateUser(Integer id, User updatedUser) {
+    public UserDto updateUser(Integer id, UserDto updatedUserDto) {
         User user = userDao.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id));
 
-        // Обновление полей пользователя
-        user.setName(updatedUser.getName());
-        user.setEmail(updatedUser.getEmail());
-        user.setPassword(updatedUser.getPassword());
+        user.setName(updatedUserDto.getName());
+        user.setEmail(updatedUserDto.getEmail());
+        user.setPassword(updatedUserDto.getPassword());
 
-        // Сохранение изменений (не обязательно при работе с JPA, если сущность отслеживается)
-        return user;  // После завершения транзакции, изменения будут автоматически сохранены
+        return convertToDto(user);
     }
 
-
-    public User patchUser(Integer id, User partialUser) {
+    public UserDto patchUser(Integer id, UserDto partialUserDto) {
         User user = userDao.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id));
 
-        if (partialUser.getName() != null) {
-            user.setName(partialUser.getName());
+        if (partialUserDto.getName() != null) {
+            user.setName(partialUserDto.getName());
         }
-        if (partialUser.getEmail() != null) {
-            user.setEmail(partialUser.getEmail());
+        if (partialUserDto.getEmail() != null) {
+            user.setEmail(partialUserDto.getEmail());
         }
-        if (partialUser.getPassword() != null) {
-            user.setPassword(partialUser.getPassword());
+        if (partialUserDto.getPassword() != null) {
+            user.setPassword(partialUserDto.getPassword());
         }
 
-        return userDao.save(user);
+        return convertToDto(userDao.save(user));
     }
 
-    public List<Comment> getCommentsByUserId(Integer id) {
+    public List<CommentDto> getCommentsByUserId(Integer id) {
         User user = userDao.findById(id).orElseThrow(()
-                -> new MovieNotFoundException(USER_NOT_FOUND_MESSAGE + id));
-        return user.getComments();
+                -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id));
+        return user.getComments().stream().map(this::convertToDto).toList();
+    }
+
+    private UserDto convertToDto(User user) {
+        UserDto userDto = new UserDto();
+        userDto.setId(user.getId());
+        userDto.setName(user.getName());
+        userDto.setEmail(user.getEmail());
+        userDto.setPassword(user.getPassword());
+
+        if (user.getComments() != null) {
+            List<CommentDto> commentDtos = user.getComments().stream()
+                    .map(this::convertToDto)
+                    .toList();
+            userDto.setComments(commentDtos);
+        }
+
+        if (user.getMovies() != null) {
+            List<MovieDto> movieDtos = user.getMovies().stream()
+                    .map(this::convertToDto)
+                    .toList();
+            userDto.setMovies(movieDtos);
+        }
+
+        return userDto;
+    }
+
+    private CommentDto convertToDto(Comment comment) {
+        CommentDto commentDto = new CommentDto();
+        commentDto.setId(comment.getId());
+        commentDto.setContent(comment.getContent());
+        commentDto.setUserId(comment.getUserId());
+        commentDto.setMovieId(comment.getMovieId());
+        return commentDto;
+    }
+
+    private MovieDto convertToDto(Movie movie) {
+        MovieDto movieDto = new MovieDto();
+        movieDto.setId(movie.getId());
+        movieDto.setTitle(movie.getTitle());
+        movieDto.setGenre(movie.getGenre());
+        movieDto.setYear(movie.getYear());
+        return movieDto;
+    }
+
+    private User convertToEntity(UserDto userDto) {
+        User user = new User();
+        user.setId(userDto.getId());
+        user.setName(userDto.getName());
+        user.setEmail(userDto.getEmail());
+        user.setPassword(userDto.getPassword());
+        return user;
     }
 }

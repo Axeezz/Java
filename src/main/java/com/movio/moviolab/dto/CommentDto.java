@@ -1,17 +1,11 @@
-package com.movio.moviolab.models;
+package com.movio.moviolab.dto;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 
-@Entity
-public class Comment {
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class CommentDto {
     private Integer id;
-
     private String content;
     private Integer userId;
     private Integer movieId;
@@ -45,7 +39,6 @@ public class Comment {
     }
 
     public void setMovieId(Integer movieId) {
-
         this.movieId = movieId;
     }
 }

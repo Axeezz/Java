@@ -32,8 +32,4 @@ public class CommentDao {
     public void delete(Comment comment) {
         commentRepository.delete(comment);
     }
-
-    public boolean existsById(Integer id) {
-        return commentRepository.existsById(id);
-    }
 }

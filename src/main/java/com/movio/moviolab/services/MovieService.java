@@ -1,19 +1,21 @@
 package com.movio.moviolab.services;
 
 import com.movio.moviolab.dao.MovieDao;
+import com.movio.moviolab.dao.UserDao;
+import com.movio.moviolab.dto.CommentDto;
+import com.movio.moviolab.dto.MovieDto;
+import com.movio.moviolab.dto.UserDto;
 import com.movio.moviolab.exceptions.MovieNotFoundException;
+import com.movio.moviolab.exceptions.UserNotFoundException;
 import com.movio.moviolab.models.Comment;
 import com.movio.moviolab.models.Movie;
 import com.movio.moviolab.models.User;
-import com.movio.moviolab.repositories.MovieRepository;
-import com.movio.moviolab.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
 
 @Service
 public class MovieService {
@@ -23,34 +25,32 @@ public class MovieService {
     private static final String MOVIE_NOT_FOUND_MESSAGE = "Movie not found: ";
 
     private final MovieDao movieDao;
-    private final MovieRepository movieRepository;
-    private final UserRepository userRepository;
+    private final UserDao userDao;
 
     @Autowired
-    public MovieService(com.movio.moviolab.dao.MovieDao movieDao,
-                        MovieRepository movieRepository, UserRepository userRepository) {
+    public MovieService(MovieDao movieDao, UserDao userDao) {
         this.movieDao = movieDao;
-        this.movieRepository = movieRepository;
-        this.userRepository = userRepository;
+        this.userDao = userDao;
     }
 
-    public List<Movie> getMovies(String genre, Integer year, String title) {
+    public List<MovieDto> getMovies(String genre, Integer year, String title) {
         return movieDao.findAll().stream()
                 .filter(movie -> genre == null || movie.getGenre().equalsIgnoreCase(genre))
                 .filter(movie -> year == null || movie.getYear().equals(year))
                 .filter(movie -> title == null || movie.getTitle().equalsIgnoreCase(title))
-                .toList();  // Using Stream.toList() instead of collect(Collectors.toList())
+                .map(this::convertToDto)
+                .toList(); // Replaced with Stream.toList()
     }
 
-    public Movie getMovieById(Integer id) {
-        return movieDao.findById(id)
+    public MovieDto getMovieById(Integer id) {
+        Movie movie = movieDao.findById(id)
                 .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
+        return convertToDto(movie);
     }
 
-    public Movie addMovie(Movie movie) {
-        if (movie == null) {
-            throw new IllegalArgumentException("Movie cannot be null");
-        }
+    public MovieDto addMovie(MovieDto movieDto) {
+        Movie movie = convertToEntity(movieDto);
+
         List<Movie> existingMovies = movieDao
                 .findByGenreAndYearAndTitle(movie.getGenre(), movie.getYear(), movie.getTitle());
 
@@ -58,92 +58,144 @@ public class MovieService {
             throw new IllegalArgumentException(MOVIE_ALREADY_EXISTS_MESSAGE
                     + movie.getTitle() + ", " + movie.getGenre() + ", " + movie.getYear());
         }
-        return movieDao.save(movie);
+        return convertToDto(movieDao.save(movie));
     }
 
     @Transactional
     public void deleteMovieById(Integer id) {
-        if (!movieDao.existsById(id)) {
+        if (movieDao.existsById(id)) {
+            movieDao.deleteById(id);
+        } else {
             throw new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id);
         }
-        movieDao.deleteById(id);
     }
 
     @Transactional
-    public Movie updateMovie(Integer id, Movie updatedMovie) {
+    public MovieDto updateMovie(Integer id, MovieDto updatedMovieDto) {
         Movie movie = movieDao.findById(id)
                 .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
 
-        // Обновление полей
-        movie.setTitle(updatedMovie.getTitle());
-        movie.setGenre(updatedMovie.getGenre());
-        movie.setYear(updatedMovie.getYear());
+        movie.setTitle(updatedMovieDto.getTitle());
+        movie.setGenre(updatedMovieDto.getGenre());
+        movie.setYear(updatedMovieDto.getYear());
 
-        // Не нужно вызывать save(), если объект уже отслеживается
-        return movie;
+        return convertToDto(movie);
     }
 
-
-    public Movie patchMovie(Integer id, Movie partialMovie) {
+    public MovieDto patchMovie(Integer id, MovieDto partialMovieDto) {
         Movie movie = movieDao.findById(id)
                 .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
 
-        if (partialMovie.getTitle() != null) {
-            movie.setTitle(partialMovie.getTitle());
+        if (partialMovieDto.getTitle() != null) {
+            movie.setTitle(partialMovieDto.getTitle());
         }
-        if (partialMovie.getGenre() != null) {
-            movie.setGenre(partialMovie.getGenre());
+        if (partialMovieDto.getGenre() != null) {
+            movie.setGenre(partialMovieDto.getGenre());
         }
-        if (partialMovie.getYear() != null) {
-            movie.setYear(partialMovie.getYear());
+        if (partialMovieDto.getYear() != null) {
+            movie.setYear(partialMovieDto.getYear());
         }
 
-        return movieDao.save(movie);
+        return convertToDto(movieDao.save(movie));
     }
 
-    public List<Comment> getCommentsByMovieId(Integer id) {
+    public List<CommentDto> getCommentsByMovieId(Integer id) {
         Movie movie = movieDao.findById(id).orElseThrow(()
                 -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
-        return movie.getComments();
+        return movie.getComments().stream().map(this::convertToDto).toList();
     }
 
-    public ResponseEntity<Void> addUserToMovie(Integer movieId, Integer userId) {
-        Movie movie = movieRepository.findById(movieId)
-                .orElseThrow(() -> new RuntimeException(MOVIE_NOT_FOUND_MESSAGE + movieId));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+    public ResponseEntity<String> addUserToMovie(Integer movieId, Integer userId) {
+        Movie movie = movieDao.findById(movieId)
+                .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + movieId));
+        User user = userDao.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + userId));
+
+        if (movie.getUsers().contains(user)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("User is already associated with this movie.");
+        }
 
         movie.getUsers().add(user);
         user.getMovies().add(movie);
 
-        movieRepository.save(movie);
-        userRepository.save(user);
+        movieDao.save(movie);
+        userDao.save(user);
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+
     public ResponseEntity<Void> removeUserFromMovie(Integer movieId, Integer userId) {
-        Movie movie = movieRepository.findById(movieId)
+        Movie movie = movieDao.findById(movieId)
                 .orElseThrow(() -> new RuntimeException(MOVIE_NOT_FOUND_MESSAGE + movieId));
-        User user = userRepository.findById(userId)
+        User user = userDao.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         movie.getUsers().remove(user);
         user.getMovies().remove(movie);
 
-        movieRepository.save(movie);
-        userRepository.save(user);
+        movieDao.save(movie);
+        userDao.save(user);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-    public List<User> getUsersForMovie(Integer movieId) {
-        // Find the movie by its ID, or throw an exception if not found
-        Movie movie = movieRepository.findById(movieId)
+    public List<UserDto> getUsersForMovie(Integer movieId) {
+        Movie movie = movieDao.findById(movieId)
                 .orElseThrow(() -> new RuntimeException("Movie not found with id: " + movieId));
 
-        // Return the set of users associated with this movie
-        return movie.getUsers();  // Assuming getUsers() returns a Set<User>
+        return movie.getUsers().stream().map(this::convertToDto).toList();
     }
 
+    private MovieDto convertToDto(Movie movie) {
+        MovieDto movieDto = new MovieDto();
+        movieDto.setId(movie.getId());
+        movieDto.setTitle(movie.getTitle());
+        movieDto.setGenre(movie.getGenre());
+        movieDto.setYear(movie.getYear());
+
+        if (movie.getComments() != null) {
+            List<CommentDto> commentDtos = movie.getComments().stream()
+                    .map(this::convertToDto)
+                    .toList();
+            movieDto.setComments(commentDtos);
+        }
+
+        if (movie.getUsers() != null) {
+            List<UserDto> userDtos = movie.getUsers().stream()
+                    .map(this::convertToDto)
+                    .toList();
+            movieDto.setUsers(userDtos);
+        }
+
+        return movieDto;
+    }
+
+    private CommentDto convertToDto(Comment comment) {
+        CommentDto commentDto = new CommentDto();
+        commentDto.setId(comment.getId());
+        commentDto.setContent(comment.getContent());
+        commentDto.setUserId(comment.getUserId());
+        commentDto.setMovieId(comment.getMovieId());
+        return commentDto;
+    }
+
+    private UserDto convertToDto(User user) {
+        UserDto userDto = new UserDto();
+        userDto.setId(user.getId());
+        userDto.setName(user.getName());
+        userDto.setEmail(user.getEmail());
+        userDto.setPassword(user.getPassword());
+        return userDto;
+    }
+
+    private Movie convertToEntity(MovieDto movieDto) {
+        Movie movie = new Movie();
+        movie.setId(movieDto.getId());
+        movie.setTitle(movieDto.getTitle());
+        movie.setGenre(movieDto.getGenre());
+        movie.setYear(movieDto.getYear());
+        return movie;
+    }
 }
