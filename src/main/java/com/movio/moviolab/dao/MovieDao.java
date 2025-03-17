@@ -2,6 +2,7 @@ package com.movio.moviolab.dao;
 
 import com.movio.moviolab.models.Movie;
 import com.movio.moviolab.repositories.MovieRepository;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,7 @@ public class MovieDao {
         return movieRepository.save(movie);
     }
 
+    @Transactional
     public void deleteById(Integer id) {
         movieRepository.deleteById(id);
     }

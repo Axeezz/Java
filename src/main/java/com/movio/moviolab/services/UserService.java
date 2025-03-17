@@ -88,6 +88,7 @@ public class UserService {
         return convertToDto(user);
     }
 
+    @Transactional
     public UserDto patchUser(Integer id, UserDto partialUserDto) {
         User user = userDao.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id));

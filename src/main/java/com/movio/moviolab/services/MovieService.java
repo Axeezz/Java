@@ -82,6 +82,7 @@ public class MovieService {
         return convertToDto(movie);
     }
 
+    @Transactional
     public MovieDto patchMovie(Integer id, MovieDto partialMovieDto) {
         Movie movie = movieDao.findById(id)
                 .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
@@ -105,6 +106,7 @@ public class MovieService {
         return movie.getComments().stream().map(this::convertToDto).toList();
     }
 
+    @Transactional
     public ResponseEntity<String> addUserToMovie(Integer movieId, Integer userId) {
         Movie movie = movieDao.findById(movieId)
                 .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + movieId));
@@ -125,7 +127,7 @@ public class MovieService {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-
+    @Transactional
     public ResponseEntity<Void> removeUserFromMovie(Integer movieId, Integer userId) {
         Movie movie = movieDao.findById(movieId)
                 .orElseThrow(() -> new RuntimeException(MOVIE_NOT_FOUND_MESSAGE + movieId));
