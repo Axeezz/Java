@@ -1,5 +1,6 @@
 package com.movio.moviolab.controllers;
 
+import com.movio.moviolab.dao.UserDao;
 import com.movio.moviolab.dto.CommentDto;
 import com.movio.moviolab.dto.UserDto;
 import com.movio.moviolab.services.UserService;
@@ -23,10 +24,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+    private final UserDao userDao;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, UserDao userDao) {
         this.userService = userService;
+        this.userDao = userDao;
     }
 
     @GetMapping
@@ -69,5 +72,16 @@ public class UserController {
     @PatchMapping("/{id}")
     public UserDto patchUser(@Valid @PathVariable Integer id, @RequestBody UserDto partialUserDto) {
         return userService.patchUser(id, partialUserDto);
+    }
+
+    @GetMapping("/by-movie-genre")
+    public List<UserDto> getUsersByMovieGenre(String genre) {
+        return userService.getUsersByGenreFromCacheOrDb(genre, userDao::findUsersByMovieGenre);
+    }
+
+    @GetMapping("/by-movie-genre-native")
+    public List<UserDto> getUsersByMovieGenreNative(String genre) {
+        return userService.getUsersByGenreFromCacheOrDb(genre,
+                userDao::findUsersByMovieGenreNative);
     }
 }

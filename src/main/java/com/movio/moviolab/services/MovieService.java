@@ -1,5 +1,6 @@
 package com.movio.moviolab.services;
 
+import com.movio.moviolab.cache.InMemoryCache;
 import com.movio.moviolab.dao.MovieDao;
 import com.movio.moviolab.dao.UserDao;
 import com.movio.moviolab.dto.CommentDto;
@@ -23,14 +24,17 @@ public class MovieService {
     private static final String MOVIE_ALREADY_EXISTS_MESSAGE =
             "Movie with the same title, genre, and year already exists: ";
     private static final String MOVIE_NOT_FOUND_MESSAGE = "Movie not found: ";
+    private static final String CACHE_PREFIX_MOVIE_GENRE = "movie_genre_";
 
     private final MovieDao movieDao;
     private final UserDao userDao;
+    private final InMemoryCache inMemoryCache;
 
     @Autowired
-    public MovieService(MovieDao movieDao, UserDao userDao) {
+    public MovieService(MovieDao movieDao, UserDao userDao, InMemoryCache inMemoryCache) {
         this.movieDao = movieDao;
         this.userDao = userDao;
+        this.inMemoryCache = inMemoryCache;
     }
 
     public List<MovieDto> getMovies(String genre, Integer year, String title) {
@@ -39,7 +43,7 @@ public class MovieService {
                 .filter(movie -> year == null || movie.getYear().equals(year))
                 .filter(movie -> title == null || movie.getTitle().equalsIgnoreCase(title))
                 .map(this::convertToDto)
-                .toList(); // Replaced with Stream.toList()
+                .toList();
     }
 
     public MovieDto getMovieById(Integer id) {
@@ -58,16 +62,23 @@ public class MovieService {
             throw new IllegalArgumentException(MOVIE_ALREADY_EXISTS_MESSAGE
                     + movie.getTitle() + ", " + movie.getGenre() + ", " + movie.getYear());
         }
-        return convertToDto(movieDao.save(movie));
+
+        Movie savedMovie = movieDao.save(movie);
+
+        inMemoryCache.remove(CACHE_PREFIX_MOVIE_GENRE
+                + savedMovie.getGenre());
+
+        return convertToDto(savedMovie);
     }
 
     @Transactional
     public void deleteMovieById(Integer id) {
-        if (movieDao.existsById(id)) {
-            movieDao.deleteById(id);
-        } else {
-            throw new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id);
-        }
+        Movie movie = movieDao.findById(id)
+                .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
+
+        movieDao.deleteById(id);
+
+        inMemoryCache.remove(CACHE_PREFIX_MOVIE_GENRE + movie.getGenre());
     }
 
     @Transactional
@@ -75,17 +86,26 @@ public class MovieService {
         Movie movie = movieDao.findById(id)
                 .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
 
+        final String oldGenre = movie.getGenre();
+
         movie.setTitle(updatedMovieDto.getTitle());
         movie.setGenre(updatedMovieDto.getGenre());
         movie.setYear(updatedMovieDto.getYear());
 
-        return convertToDto(movie);
+        Movie updatedMovie = movieDao.save(movie);
+
+        inMemoryCache.remove(CACHE_PREFIX_MOVIE_GENRE + oldGenre);
+        inMemoryCache.remove(CACHE_PREFIX_MOVIE_GENRE + updatedMovie.getGenre());
+
+        return convertToDto(updatedMovie);
     }
 
     @Transactional
     public MovieDto patchMovie(Integer id, MovieDto partialMovieDto) {
         Movie movie = movieDao.findById(id)
                 .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
+
+        final String oldGenre = movie.getGenre();
 
         if (partialMovieDto.getTitle() != null) {
             movie.setTitle(partialMovieDto.getTitle());
@@ -97,7 +117,12 @@ public class MovieService {
             movie.setYear(partialMovieDto.getYear());
         }
 
-        return convertToDto(movieDao.save(movie));
+        Movie updatedMovie = movieDao.save(movie);
+
+        inMemoryCache.remove(CACHE_PREFIX_MOVIE_GENRE + oldGenre);
+        inMemoryCache.remove(CACHE_PREFIX_MOVIE_GENRE + updatedMovie.getGenre());
+
+        return convertToDto(updatedMovie);
     }
 
     public List<CommentDto> getCommentsByMovieId(Integer id) {
@@ -124,6 +149,9 @@ public class MovieService {
         movieDao.save(movie);
         userDao.save(user);
 
+        inMemoryCache.remove(CACHE_PREFIX_MOVIE_GENRE
+                + movie.getGenre());
+
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -140,8 +168,12 @@ public class MovieService {
         movieDao.save(movie);
         userDao.save(user);
 
+        inMemoryCache.remove(CACHE_PREFIX_MOVIE_GENRE
+                + movie.getGenre());
+
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
+
 
     public List<UserDto> getUsersForMovie(Integer movieId) {
         Movie movie = movieDao.findById(movieId)
@@ -188,7 +220,6 @@ public class MovieService {
         userDto.setId(user.getId());
         userDto.setName(user.getName());
         userDto.setEmail(user.getEmail());
-        userDto.setPassword(user.getPassword());
         return userDto;
     }
 

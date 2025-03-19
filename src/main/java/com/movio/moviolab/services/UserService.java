@@ -1,5 +1,6 @@
 package com.movio.moviolab.services;
 
+import com.movio.moviolab.cache.InMemoryCache;
 import com.movio.moviolab.dao.MovieDao;
 import com.movio.moviolab.dao.UserDao;
 import com.movio.moviolab.dto.CommentDto;
@@ -10,7 +11,12 @@ import com.movio.moviolab.models.Comment;
 import com.movio.moviolab.models.Movie;
 import com.movio.moviolab.models.User;
 import jakarta.transaction.Transactional;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -24,12 +30,18 @@ public class UserService {
 
     private final UserDao userDao;
     private final MovieDao movieDao;
+    private final InMemoryCache inMemoryCache;
 
     @Autowired
-    public UserService(UserDao userDao, MovieDao movieDao) {
+    public UserService(UserDao userDao, MovieDao movieDao, InMemoryCache inMemoryCache) {
         this.userDao = userDao;
         this.movieDao = movieDao;
+        this.inMemoryCache = inMemoryCache;
     }
+
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
+
+    private static final String CACHE_KEY = "movie_genre_";
 
     public List<UserDto> getUsers(String name, String email) {
         List<User> users;
@@ -59,7 +71,11 @@ public class UserService {
         if (!userDao.findByEmailIgnoreCase(user.getEmail()).isEmpty()) {
             throw new IllegalArgumentException(USER_ALREADY_EXISTS_MESSAGE + user.getEmail());
         }
-        return convertToDto(userDao.save(user));
+        User savedUser = userDao.save(user);
+
+        inMemoryCache.remove(CACHE_KEY + user.getName());
+
+        return convertToDto(savedUser);
     }
 
     @Transactional
@@ -73,6 +89,9 @@ public class UserService {
         }
 
         userDao.deleteById(id);
+
+        inMemoryCache.remove(CACHE_KEY + user.getName());
+
         return ResponseEntity.noContent().build();
     }
 
@@ -85,7 +104,11 @@ public class UserService {
         user.setEmail(updatedUserDto.getEmail());
         user.setPassword(updatedUserDto.getPassword());
 
-        return convertToDto(user);
+        User updatedUser = userDao.save(user);
+
+        inMemoryCache.remove(CACHE_KEY + user.getName());
+
+        return convertToDto(updatedUser);
     }
 
     @Transactional
@@ -103,7 +126,11 @@ public class UserService {
             user.setPassword(partialUserDto.getPassword());
         }
 
-        return convertToDto(userDao.save(user));
+        User updatedUser = userDao.save(user);
+
+        inMemoryCache.remove(CACHE_KEY + user.getName());
+
+        return convertToDto(updatedUser);
     }
 
     public List<CommentDto> getCommentsByUserId(Integer id) {
@@ -112,12 +139,49 @@ public class UserService {
         return user.getComments().stream().map(this::convertToDto).toList();
     }
 
+    public List<UserDto> getUsersByGenreFromCacheOrDb(String genre, Function<String,
+            List<User>> findUsersByGenreFunction) {
+        String key = CACHE_KEY + genre;
+
+        if (inMemoryCache.contains(key)) {
+            log.info("Извлечение пользователей для жанра '{}' из кеша", genre);
+
+            Optional<Object> cachedData = inMemoryCache.get(key);
+
+            if (cachedData.isPresent() && cachedData.get() instanceof List<?> cachedList) {
+                if (!cachedList.isEmpty() && cachedList.getFirst() instanceof UserDto) {
+                    @SuppressWarnings("unchecked")
+                    List<UserDto> cachedUsers = (List<UserDto>) cachedList;
+                    log.info("Возврат пользователей для жанра '{}'\n", genre);
+                    return cachedUsers;
+                } else {
+                    log.warn("Данные для ключа '{}' имеют неожиданный тип или пусты.\n", key);
+                    return Collections.emptyList();
+                }
+            } else {
+                log.warn("Промах кеша или неверные данные ключа '{}'\n", key);
+                return Collections.emptyList();
+            }
+        }
+
+        log.info("Извлечение пользователей по жанру '{}' из базы данных", genre);
+        List<User> users = findUsersByGenreFunction.apply(genre);
+
+        List<UserDto> userDtos = users.stream()
+                .map(this::convertToDto)
+                .toList();
+
+        inMemoryCache.put(key, userDtos);
+
+        return userDtos;
+    }
+
+
     private UserDto convertToDto(User user) {
         UserDto userDto = new UserDto();
         userDto.setId(user.getId());
         userDto.setName(user.getName());
         userDto.setEmail(user.getEmail());
-        userDto.setPassword(user.getPassword());
 
         if (user.getComments() != null) {
             List<CommentDto> commentDtos = user.getComments().stream()

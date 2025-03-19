@@ -51,4 +51,12 @@ public class UserDao {
     public void deleteById(Integer id) {
         userRepository.deleteById(id);
     }
+
+    public List<User> findUsersByMovieGenre(String genre) {
+        return userRepository.findUsersByMovieGenre(genre);
+    }
+
+    public List<User> findUsersByMovieGenreNative(String genre) {
+        return userRepository.findUsersByMovieGenreNative(genre);
+    }
 }
