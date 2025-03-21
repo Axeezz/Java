@@ -65,9 +65,6 @@ public class MovieService {
 
         Movie savedMovie = movieDao.save(movie);
 
-        inMemoryCache.remove(CACHE_PREFIX_MOVIE_GENRE
-                + savedMovie.getGenre());
-
         return convertToDto(savedMovie);
     }
 
@@ -149,8 +146,12 @@ public class MovieService {
         movieDao.save(movie);
         userDao.save(user);
 
-        inMemoryCache.remove(CACHE_PREFIX_MOVIE_GENRE
-                + movie.getGenre());
+        for (Movie userMovies : user.getMovies()) {
+            String genre = userMovies.getGenre();
+
+            String key = CACHE_PREFIX_MOVIE_GENRE + genre;
+            inMemoryCache.remove(key);
+        }
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
@@ -168,8 +169,12 @@ public class MovieService {
         movieDao.save(movie);
         userDao.save(user);
 
-        inMemoryCache.remove(CACHE_PREFIX_MOVIE_GENRE
-                + movie.getGenre());
+        for (Movie userMovies : user.getMovies()) {
+            String genre = userMovies.getGenre();
+
+            String key = CACHE_PREFIX_MOVIE_GENRE + genre;
+            inMemoryCache.remove(key);
+        }
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }

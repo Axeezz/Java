@@ -73,8 +73,6 @@ public class UserService {
         }
         User savedUser = userDao.save(user);
 
-        inMemoryCache.removeAll();
-
         return convertToDto(savedUser);
     }
 
@@ -84,13 +82,16 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND_MESSAGE + id));
 
         for (Movie movie : user.getMovies()) {
+            String genre = movie.getGenre();
+
+            String key = CACHE_KEY + genre;
+            inMemoryCache.remove(key);
+
             movie.getUsers().remove(user);
             movieDao.save(movie);
         }
 
         userDao.deleteById(id);
-
-        inMemoryCache.removeAll();
 
         return ResponseEntity.noContent().build();
     }
@@ -106,7 +107,12 @@ public class UserService {
 
         User updatedUser = userDao.save(user);
 
-        inMemoryCache.removeAll();
+        for (Movie movie : user.getMovies()) {
+            String genre = movie.getGenre();
+
+            String key = CACHE_KEY + genre;
+            inMemoryCache.remove(key);
+        }
 
         return convertToDto(updatedUser);
     }
@@ -128,7 +134,12 @@ public class UserService {
 
         User updatedUser = userDao.save(user);
 
-        inMemoryCache.removeAll();
+        for (Movie movie : user.getMovies()) {
+            String genre = movie.getGenre();
+
+            String key = CACHE_KEY + genre;
+            inMemoryCache.remove(key);
+        }
 
         return convertToDto(updatedUser);
     }

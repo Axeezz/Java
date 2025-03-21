@@ -58,13 +58,6 @@ public class InMemoryCache {
         }
     }
 
-    public void removeAll() {
-        synchronized (cacheMap) {
-            cacheMap.clear();
-            logger.info("Кеш был очищен");
-        }
-    }
-
     public int size() {
         synchronized (cacheMap) {
             int size = cacheMap.size();
