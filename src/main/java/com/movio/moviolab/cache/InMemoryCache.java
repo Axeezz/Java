@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class InMemoryCache {
 
-    private static final int MAX_CACHE_SIZE = 100;
+    private static final int MAX_CACHE_SIZE = 3;
     private final Map<String, Object> cacheMap;
     private static final Logger logger = LoggerFactory.getLogger(InMemoryCache.class);
 
@@ -55,6 +55,13 @@ public class InMemoryCache {
             } else {
                 logger.info("Попытка удалить несуществующий ключ из кэша: ключ={}\n", key);
             }
+        }
+    }
+
+    public void removeAll() {
+        synchronized (cacheMap) {
+            cacheMap.clear();
+            logger.info("Кеш был очищен");
         }
     }
 

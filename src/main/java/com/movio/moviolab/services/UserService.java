@@ -73,7 +73,7 @@ public class UserService {
         }
         User savedUser = userDao.save(user);
 
-        inMemoryCache.remove(CACHE_KEY + user.getName());
+        inMemoryCache.removeAll();
 
         return convertToDto(savedUser);
     }
@@ -90,7 +90,7 @@ public class UserService {
 
         userDao.deleteById(id);
 
-        inMemoryCache.remove(CACHE_KEY + user.getName());
+        inMemoryCache.removeAll();
 
         return ResponseEntity.noContent().build();
     }
@@ -106,7 +106,7 @@ public class UserService {
 
         User updatedUser = userDao.save(user);
 
-        inMemoryCache.remove(CACHE_KEY + user.getName());
+        inMemoryCache.removeAll();
 
         return convertToDto(updatedUser);
     }
@@ -128,7 +128,7 @@ public class UserService {
 
         User updatedUser = userDao.save(user);
 
-        inMemoryCache.remove(CACHE_KEY + user.getName());
+        inMemoryCache.removeAll();
 
         return convertToDto(updatedUser);
     }
