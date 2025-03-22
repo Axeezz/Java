@@ -17,9 +17,9 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query("SELECT DISTINCT u FROM User u JOIN u.movies m WHERE m.genre = :genre")
     List<User> findUsersByMovieGenre(@Param("genre") String genre);
 
-    @Query(value = "SELECT DISTINCT u.* FROM user u "
+    @Query(value = "SELECT DISTINCT u.* FROM users u "
             + "JOIN movie_user mu ON u.id = mu.user_id "
-            + "JOIN movie m ON mu.movie_id = m.id "
+            + "JOIN movies m ON mu.movie_id = m.id "
             + "WHERE m.genre = :genre", nativeQuery = true)
     List<User> findUsersByMovieGenreNative(@Param("genre") String genre);
 

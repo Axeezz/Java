@@ -70,13 +70,14 @@ public class MovieService {
 
     @Transactional
     public void deleteMovieById(Integer id) {
-        Movie movie = movieDao.findById(id)
+        movieDao.findById(id)
                 .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
 
-        movieDao.deleteById(id);
+        inMemoryCache.removeAll();
 
-        inMemoryCache.remove(CACHE_PREFIX_MOVIE_GENRE + movie.getGenre());
+        movieDao.deleteById(id);
     }
+
 
     @Transactional
     public MovieDto updateMovie(Integer id, MovieDto updatedMovieDto) {
@@ -163,18 +164,18 @@ public class MovieService {
         User user = userDao.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        movie.getUsers().remove(user);
-        user.getMovies().remove(movie);
-
-        movieDao.save(movie);
-        userDao.save(user);
-
         for (Movie userMovies : user.getMovies()) {
             String genre = userMovies.getGenre();
 
             String key = CACHE_PREFIX_MOVIE_GENRE + genre;
             inMemoryCache.remove(key);
         }
+
+        movie.getUsers().remove(user);
+        user.getMovies().remove(movie);
+
+        movieDao.save(movie);
+        userDao.save(user);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
