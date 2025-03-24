@@ -6,7 +6,7 @@ import com.movio.moviolab.dao.UserDao;
 import com.movio.moviolab.dto.CommentDto;
 import com.movio.moviolab.dto.MovieDto;
 import com.movio.moviolab.dto.UserDto;
-import com.movio.moviolab.exceptions.UserNotFoundException;
+import com.movio.moviolab.exceptions.UserException;
 import com.movio.moviolab.models.Comment;
 import com.movio.moviolab.models.Movie;
 import com.movio.moviolab.models.User;
@@ -40,7 +40,6 @@ public class UserService {
     }
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
-
     private static final String CACHE_KEY = "movie_genre_";
 
     public List<UserDto> getUsers(String name, String email) {
@@ -59,7 +58,7 @@ public class UserService {
 
     public UserDto getUserById(Integer id) {
         User user = userDao.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id));
+                .orElseThrow(() -> new UserException(USER_NOT_FOUND_MESSAGE + id));
         return convertToDto(user);
     }
 
@@ -77,9 +76,9 @@ public class UserService {
     }
 
     @Transactional
-    public ResponseEntity<Void> deleteUserById(Integer id) {
+    public ResponseEntity<String> deleteUserById(Integer id) {
         User user = userDao.findById(id)
-                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND_MESSAGE + id));
+                .orElseThrow(() -> new UserException(USER_NOT_FOUND_MESSAGE + id));
 
         for (Movie movie : user.getMovies()) {
             String genre = movie.getGenre();
@@ -99,7 +98,7 @@ public class UserService {
     @Transactional
     public UserDto updateUser(Integer id, UserDto updatedUserDto) {
         User user = userDao.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id));
+                .orElseThrow(() -> new UserException(USER_NOT_FOUND_MESSAGE + id));
 
         user.setName(updatedUserDto.getName());
         user.setEmail(updatedUserDto.getEmail());
@@ -120,7 +119,7 @@ public class UserService {
     @Transactional
     public UserDto patchUser(Integer id, UserDto partialUserDto) {
         User user = userDao.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id));
+                .orElseThrow(() -> new UserException(USER_NOT_FOUND_MESSAGE + id));
 
         if (partialUserDto.getName() != null) {
             user.setName(partialUserDto.getName());
@@ -146,7 +145,7 @@ public class UserService {
 
     public List<CommentDto> getCommentsByUserId(Integer id) {
         User user = userDao.findById(id).orElseThrow(()
-                -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id));
+                -> new UserException(USER_NOT_FOUND_MESSAGE + id));
         return user.getComments().stream().map(this::convertToDto).toList();
     }
 
@@ -186,7 +185,6 @@ public class UserService {
 
         return userDtos;
     }
-
 
     private UserDto convertToDto(User user) {
         UserDto userDto = new UserDto();

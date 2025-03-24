@@ -30,58 +30,70 @@ public class MovieController {
     }
 
     @GetMapping
-    public List<MovieDto> getMovies(
+    public ResponseEntity<List<MovieDto>> getMovies(
             @RequestParam(name = "genre", required = false) final String genre,
             @RequestParam(name = "year", required = false) final Integer year,
             @RequestParam(name = "title", required = false) final String title
     ) {
-        return movieService.getMovies(genre, year, title);
+        List<MovieDto> movies = movieService.getMovies(genre, year, title);
+        return ResponseEntity.ok(movies);
     }
 
     @GetMapping("/{id}")
-    public MovieDto getMovieById(@PathVariable final Integer id) {
-        return movieService.getMovieById(id);
+    public ResponseEntity<MovieDto> getMovieById(@PathVariable final Integer id) {
+        MovieDto movie = movieService.getMovieById(id);
+        return ResponseEntity.ok(movie);
     }
 
     @GetMapping("/{id}/comments")
-    public List<CommentDto> getCommentsByMovieId(@PathVariable final Integer id) {
-        return movieService.getCommentsByMovieId(id);
+    public ResponseEntity<List<CommentDto>> getCommentsByMovieId(@PathVariable final Integer id) {
+        List<CommentDto> comments = movieService.getCommentsByMovieId(id);
+        return ResponseEntity.ok(comments);
+
     }
 
     @PostMapping
-    public MovieDto addMovie(@RequestBody MovieDto movieDto) {
-        return movieService.addMovie(movieDto);
+    public ResponseEntity<MovieDto> addMovie(@RequestBody MovieDto movieDto) {
+        MovieDto newMovie = movieService.addMovie(movieDto);
+        return ResponseEntity.status(201).body(newMovie); // Movie created
     }
 
+
     @DeleteMapping("/{id}")
-    public void deleteMovie(@PathVariable Integer id) {
+    public ResponseEntity<String> deleteMovie(@PathVariable Integer id) {
         movieService.deleteMovieById(id);
+        return ResponseEntity.ok("Movie deleted successfully"); // Success
     }
 
     @PutMapping("/{id}")
-    public MovieDto updateMovie(@PathVariable Integer id, @RequestBody MovieDto updatedMovieDto) {
-        return movieService.updateMovie(id, updatedMovieDto);
+    public ResponseEntity<MovieDto> updateMovie(@PathVariable Integer id,
+                                                @RequestBody MovieDto updatedMovieDto) {
+        MovieDto updatedMovie = movieService.updateMovie(id, updatedMovieDto);
+        return ResponseEntity.ok(updatedMovie); // Movie updated
     }
 
     @PatchMapping("/{id}")
-    public MovieDto patchMovie(@PathVariable Integer id, @RequestBody MovieDto partialMovieDto) {
-        return movieService.patchMovie(id, partialMovieDto);
+    public ResponseEntity<MovieDto> patchMovie(@PathVariable Integer id,
+                                               @RequestBody MovieDto partialMovieDto) {
+        MovieDto patchedMovie = movieService.patchMovie(id, partialMovieDto);
+        return ResponseEntity.ok(patchedMovie); // Movie patched
     }
 
     @PostMapping("/{movieId}/users/{userId}")
     public ResponseEntity<String> addUserToMovie(@PathVariable Integer movieId,
-                                               @PathVariable Integer userId) {
+                                                 @PathVariable Integer userId) {
         return movieService.addUserToMovie(movieId, userId);
     }
 
     @DeleteMapping("/{movieId}/users/{userId}")
-    public ResponseEntity<Void> removeUserFromMovie(@PathVariable Integer movieId,
+    public ResponseEntity<String> removeUserFromMovie(@PathVariable Integer movieId,
                                                     @PathVariable Integer userId) {
         return movieService.removeUserFromMovie(movieId, userId);
     }
 
     @GetMapping("/{movieId}/users")
     public ResponseEntity<List<UserDto>> getUsersForMovie(@PathVariable Integer movieId) {
-        return ResponseEntity.ok(movieService.getUsersForMovie(movieId));
+        List<UserDto> users = movieService.getUsersForMovie(movieId);
+        return ResponseEntity.ok(users);
     }
 }

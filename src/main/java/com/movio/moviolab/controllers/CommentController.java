@@ -2,10 +2,10 @@ package com.movio.moviolab.controllers;
 
 import com.movio.moviolab.dto.CommentDto;
 import com.movio.moviolab.services.CommentService;
-import com.movio.moviolab.services.MovieService;
-import com.movio.moviolab.services.UserService;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -20,50 +20,41 @@ import org.springframework.web.bind.annotation.RestController;
 public class CommentController {
 
     private final CommentService commentService;
-    private final UserService userService;
-    private final MovieService movieService;
 
     @Autowired
-    public CommentController(CommentService commentService,
-                             UserService userService, MovieService movieService) {
+    public CommentController(CommentService commentService) {
         this.commentService = commentService;
-        this.userService = userService;
-        this.movieService = movieService;
     }
 
     @PostMapping
-    public CommentDto addComment(@RequestBody CommentDto commentDto) {
+    public ResponseEntity<String> createComment(@Valid @RequestBody CommentDto commentDto) {
+        // Пытаемся создать комментарий
         return commentService.addComment(commentDto);
     }
 
     @GetMapping
-    public List<CommentDto> getAllComments() {
-        return commentService.getAllComments();
+    public ResponseEntity<List<CommentDto>> getAllComments() {
+        List<CommentDto> comments = commentService.getAllComments().getBody();
+        return ResponseEntity.ok(comments); // Возвращаем комментарии
     }
 
     @GetMapping("/{id}")
-    public CommentDto getCommentById(@PathVariable Integer id) {
-        return commentService.getCommentById(id);
+    public ResponseEntity<CommentDto> getCommentById(@PathVariable Integer id) {
+        // Получаем комментарий по ID через сервис
+        CommentDto comment = commentService.getCommentById(id).getBody();
+        return ResponseEntity.ok(comment); // Возвращаем найденный комментарий
     }
 
     @PatchMapping("/{id}")
-    public CommentDto patchComment(@PathVariable Integer id,
-                                   @RequestBody CommentDto partialCommentDto) {
-        return commentService.updateComment(id, partialCommentDto);
+    public ResponseEntity<CommentDto> patchComment(@PathVariable Integer id,
+                                                   @RequestBody CommentDto partialCommentDto) {
+        CommentDto updatedComment = commentService.updateComment(id, partialCommentDto);
+        return ResponseEntity.ok(updatedComment); // Возвращаем обновленный комментарий
     }
 
     @DeleteMapping("/{id}")
-    public void deleteComment(@PathVariable Integer id) {
+    public ResponseEntity<String> deleteComment(@PathVariable Integer id) {
         commentService.deleteComment(id);
-    }
-
-    @GetMapping("/movie/{movieId}")
-    public List<CommentDto> getCommentsByMovieId(@PathVariable Integer movieId) {
-        return movieService.getCommentsByMovieId(movieId);
-    }
-
-    @GetMapping("/user/{userId}")
-    public List<CommentDto> getCommentsByUserId(@PathVariable Integer userId) {
-        return userService.getCommentsByUserId(userId);
+        return ResponseEntity.ok("Comment deleted successfully");
     }
 }

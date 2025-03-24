@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+
 @RestController
 @RequestMapping("/users")
 public class UserController {
@@ -33,55 +34,61 @@ public class UserController {
     }
 
     @GetMapping
-    public List<UserDto> getUsers(
+    public ResponseEntity<List<UserDto>> getUsers(
             @RequestParam(name = "name", required = false) String name,
             @RequestParam(name = "email", required = false) String email) {
-        return userService.getUsers(name, email);
+        List<UserDto> users = userService.getUsers(name, email);
+        return users.isEmpty() ? ResponseEntity.status(404).body(users) : ResponseEntity.ok(users);
     }
 
     @GetMapping("/{id}")
-    public UserDto getUserById(@PathVariable Integer id) {
-        return userService.getUserById(id);
+    public ResponseEntity<UserDto> getUserById(@PathVariable Integer id) {
+        UserDto userDto = userService.getUserById(id);
+        return ResponseEntity.ok(userDto);
     }
 
     @GetMapping("/{id}/comments")
-    public List<CommentDto> getCommentsByUserId(@PathVariable final Integer id) {
-        return userService.getCommentsByUserId(id);
+    public ResponseEntity<List<CommentDto>> getCommentsByUserId(@PathVariable Integer id) {
+        List<CommentDto> comments = userService.getCommentsByUserId(id);
+        return ResponseEntity.ok(comments);
     }
 
     @PostMapping
-    public UserDto addUser(@Valid @RequestBody UserDto userDto) {
-        try {
-            return userService.addUser(userDto);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(e.getMessage());
-        }
+    public ResponseEntity<UserDto> addUser(@Valid @RequestBody UserDto userDto) {
+        UserDto addedUser = userService.addUser(userDto);
+        return ResponseEntity.status(201).body(addedUser);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
+    public ResponseEntity<String> deleteUser(@PathVariable Integer id) {
         return userService.deleteUserById(id);
     }
 
     @PutMapping("/{id}")
-    public UserDto updateUser(@Valid @PathVariable Integer id,
-                              @RequestBody UserDto updatedUserDto) {
-        return userService.updateUser(id, updatedUserDto);
+    public ResponseEntity<UserDto> updateUser(@PathVariable Integer id,
+                                              @Valid @RequestBody UserDto updatedUserDto) {
+        UserDto updatedUser = userService.updateUser(id, updatedUserDto);
+        return ResponseEntity.ok(updatedUser);
     }
 
     @PatchMapping("/{id}")
-    public UserDto patchUser(@Valid @PathVariable Integer id, @RequestBody UserDto partialUserDto) {
-        return userService.patchUser(id, partialUserDto);
+    public ResponseEntity<UserDto> patchUser(@PathVariable Integer id,
+                                             @Valid @RequestBody UserDto partialUserDto) {
+        UserDto updatedUser = userService.patchUser(id, partialUserDto);
+        return ResponseEntity.ok(updatedUser);
     }
 
     @GetMapping("/by-movie-genre")
-    public List<UserDto> getUsersByMovieGenre(String genre) {
-        return userService.getUsersByGenreFromCacheOrDb(genre, userDao::findUsersByMovieGenre);
+    public ResponseEntity<List<UserDto>> getUsersByMovieGenre(@RequestParam String genre) {
+        List<UserDto> users = userService.getUsersByGenreFromCacheOrDb(genre,
+                userDao::findUsersByMovieGenre);
+        return ResponseEntity.ok(users);
     }
 
     @GetMapping("/by-movie-genre-native")
-    public List<UserDto> getUsersByMovieGenreNative(String genre) {
-        return userService.getUsersByGenreFromCacheOrDb(genre,
+    public ResponseEntity<List<UserDto>> getUsersByMovieGenreNative(@RequestParam String genre) {
+        List<UserDto> users = userService.getUsersByGenreFromCacheOrDb(genre,
                 userDao::findUsersByMovieGenreNative);
+        return ResponseEntity.ok(users);
     }
 }

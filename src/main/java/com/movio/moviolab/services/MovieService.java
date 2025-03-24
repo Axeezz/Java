@@ -6,8 +6,8 @@ import com.movio.moviolab.dao.UserDao;
 import com.movio.moviolab.dto.CommentDto;
 import com.movio.moviolab.dto.MovieDto;
 import com.movio.moviolab.dto.UserDto;
-import com.movio.moviolab.exceptions.MovieNotFoundException;
-import com.movio.moviolab.exceptions.UserNotFoundException;
+import com.movio.moviolab.exceptions.MovieException;
+import com.movio.moviolab.exceptions.UserException;
 import com.movio.moviolab.models.Comment;
 import com.movio.moviolab.models.Movie;
 import com.movio.moviolab.models.User;
@@ -48,9 +48,10 @@ public class MovieService {
 
     public MovieDto getMovieById(Integer id) {
         Movie movie = movieDao.findById(id)
-                .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
+                .orElseThrow(() -> new MovieException(MOVIE_NOT_FOUND_MESSAGE + id));
         return convertToDto(movie);
     }
+
 
     public MovieDto addMovie(MovieDto movieDto) {
         Movie movie = convertToEntity(movieDto);
@@ -59,7 +60,7 @@ public class MovieService {
                 .findByGenreAndYearAndTitle(movie.getGenre(), movie.getYear(), movie.getTitle());
 
         if (!existingMovies.isEmpty()) {
-            throw new IllegalArgumentException(MOVIE_ALREADY_EXISTS_MESSAGE
+            throw new MovieException(MOVIE_ALREADY_EXISTS_MESSAGE
                     + movie.getTitle() + ", " + movie.getGenre() + ", " + movie.getYear());
         }
 
@@ -71,18 +72,17 @@ public class MovieService {
     @Transactional
     public void deleteMovieById(Integer id) {
         movieDao.findById(id)
-                .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
+                .orElseThrow(() -> new MovieException(MOVIE_NOT_FOUND_MESSAGE + id));
 
         inMemoryCache.removeAll();
 
         movieDao.deleteById(id);
     }
 
-
     @Transactional
     public MovieDto updateMovie(Integer id, MovieDto updatedMovieDto) {
         Movie movie = movieDao.findById(id)
-                .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
+                .orElseThrow(() -> new MovieException(MOVIE_NOT_FOUND_MESSAGE + id));
 
         final String oldGenre = movie.getGenre();
 
@@ -101,7 +101,7 @@ public class MovieService {
     @Transactional
     public MovieDto patchMovie(Integer id, MovieDto partialMovieDto) {
         Movie movie = movieDao.findById(id)
-                .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
+                .orElseThrow(() -> new MovieException(MOVIE_NOT_FOUND_MESSAGE + id));
 
         final String oldGenre = movie.getGenre();
 
@@ -124,17 +124,17 @@ public class MovieService {
     }
 
     public List<CommentDto> getCommentsByMovieId(Integer id) {
-        Movie movie = movieDao.findById(id).orElseThrow(()
-                -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + id));
+        Movie movie = movieDao.findById(id)
+                .orElseThrow(() -> new MovieException(MOVIE_NOT_FOUND_MESSAGE + id));
         return movie.getComments().stream().map(this::convertToDto).toList();
     }
 
     @Transactional
     public ResponseEntity<String> addUserToMovie(Integer movieId, Integer userId) {
         Movie movie = movieDao.findById(movieId)
-                .orElseThrow(() -> new MovieNotFoundException(MOVIE_NOT_FOUND_MESSAGE + movieId));
+                .orElseThrow(() -> new MovieException(MOVIE_NOT_FOUND_MESSAGE + movieId));
         User user = userDao.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found: " + userId));
+                .orElseThrow(() -> new UserException("User not found: " + userId));
 
         if (movie.getUsers().contains(user)) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -147,9 +147,9 @@ public class MovieService {
         movieDao.save(movie);
         userDao.save(user);
 
+        // Clear cache for the genres of this user's movies
         for (Movie userMovies : user.getMovies()) {
             String genre = userMovies.getGenre();
-
             String key = CACHE_PREFIX_MOVIE_GENRE + genre;
             inMemoryCache.remove(key);
         }
@@ -158,15 +158,15 @@ public class MovieService {
     }
 
     @Transactional
-    public ResponseEntity<Void> removeUserFromMovie(Integer movieId, Integer userId) {
+    public ResponseEntity<String> removeUserFromMovie(Integer movieId, Integer userId) {
         Movie movie = movieDao.findById(movieId)
-                .orElseThrow(() -> new RuntimeException(MOVIE_NOT_FOUND_MESSAGE + movieId));
+                .orElseThrow(() -> new MovieException(MOVIE_NOT_FOUND_MESSAGE + movieId));
         User user = userDao.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserException("User not found" + userId));
 
+        // Remove user from movie and vice versa
         for (Movie userMovies : user.getMovies()) {
             String genre = userMovies.getGenre();
-
             String key = CACHE_PREFIX_MOVIE_GENRE + genre;
             inMemoryCache.remove(key);
         }
@@ -180,10 +180,9 @@ public class MovieService {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
-
     public List<UserDto> getUsersForMovie(Integer movieId) {
         Movie movie = movieDao.findById(movieId)
-                .orElseThrow(() -> new RuntimeException("Movie not found with id: " + movieId));
+                .orElseThrow(() -> new MovieException("Movie not found with id: " + movieId));
 
         return movie.getUsers().stream().map(this::convertToDto).toList();
     }
