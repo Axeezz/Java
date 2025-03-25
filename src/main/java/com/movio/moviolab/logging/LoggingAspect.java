@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 public class LoggingAspect {
     private static final Logger logger = LoggerFactory.getLogger(LoggingAspect.class);
 
-    // Логирование входа в методы CommentController
     @Before("execution(* com.movio.moviolab.controllers.CommentController.*(..))")
     public void logBeforeCommentController(JoinPoint joinPoint) {
         if (logger.isInfoEnabled()) {
@@ -23,7 +22,6 @@ public class LoggingAspect {
         }
     }
 
-    // Логирование выхода из методов CommentController
     @AfterReturning(pointcut = "execution(* com.movio.moviolab.controllers"
             + ".CommentController.*(..))", returning = "result")
     public void logAfterReturningCommentController(JoinPoint joinPoint, Object result) {
@@ -33,7 +31,6 @@ public class LoggingAspect {
         }
     }
 
-    // Логирование ошибок в методах CommentController
     @AfterThrowing(pointcut = "execution(* com.movio.moviolab.controllers"
            + ".CommentController.*(..))", throwing = "error")
     public void logAfterThrowingCommentController(JoinPoint joinPoint, Throwable error) {
@@ -43,7 +40,6 @@ public class LoggingAspect {
         }
     }
 
-    // Аналогичные аспекты для UserController
     @Before("execution(* com.movio.moviolab.controllers.UserController.*(..))")
     public void logBeforeUserController(JoinPoint joinPoint) {
         if (logger.isInfoEnabled()) {
@@ -70,7 +66,6 @@ public class LoggingAspect {
         }
     }
 
-    // Логирование входа в методы MovieController
     @Before("execution(* com.movio.moviolab.controllers.MovieController.*(..))")
     public void logBeforeMovieController(JoinPoint joinPoint) {
         if (logger.isInfoEnabled()) {
@@ -79,7 +74,6 @@ public class LoggingAspect {
         }
     }
 
-    // Логирование выхода из методов MovieController
     @AfterReturning(pointcut = "execution(* com.movio.moviolab"
             + ".controllers.MovieController.*(..))", returning = "result")
     public void logAfterReturningMovieController(JoinPoint joinPoint, Object result) {
@@ -89,7 +83,6 @@ public class LoggingAspect {
         }
     }
 
-    // Логирование ошибок в методах MovieController
     @AfterThrowing(pointcut = "execution(* com.movio.moviolab"
             + ".controllers.MovieController.*(..))", throwing = "error")
     public void logAfterThrowingMovieController(JoinPoint joinPoint, Throwable error) {
@@ -108,7 +101,6 @@ public class LoggingAspect {
         }
     }
 
-    // Логирование ошибок при работе с пользователями
     @AfterThrowing(pointcut = "execution(* com.movio.moviolab"
             + ".services.UserService.*(..))", throwing = "error")
     public void logUserServiceError(JoinPoint joinPoint, Throwable error) {
@@ -118,7 +110,6 @@ public class LoggingAspect {
         }
     }
 
-    // Логирование ошибок при работе с фильмами
     @AfterThrowing(pointcut = "execution(* com.movio.moviolab"
             + ".services.MovieService.*(..))", throwing = "error")
     public void logMovieServiceError(JoinPoint joinPoint, Throwable error) {

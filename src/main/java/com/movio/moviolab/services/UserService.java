@@ -25,9 +25,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserService {
 
-    private static final String USER_NOT_FOUND_MESSAGE = "User not found: ";
+    private static final String USER_NOT_FOUND_MESSAGE = "Пользователь не найден: ";
     private static final String USER_ALREADY_EXISTS_MESSAGE =
-            "User with this name or email already exists: ";
+            "Пользователь с таким именем и почтой уже существует: ";
 
     private final UserDao userDao;
     private final MovieDao movieDao;
@@ -196,40 +196,37 @@ public class UserService {
         return userDtos;
     }
 
-    // Функция для валидации данных пользователя
     private void validateUser(UserDto userDto, boolean isPartial) {
         if (!isPartial) {
-            // Проверка имени
             validateNameAndEmail(userDto.getName(), userDto.getEmail());
 
-            // Проверка пароля
             validatePassword(userDto.getPassword());
         } else {
             if (isInvalidName(userDto.getName())
                     && isInvalidEmail(userDto.getEmail())
                     && isInvalidPassword(userDto.getPassword())) {
-                throw new ValidationException("New comment is invalid");
+                throw new ValidationException("Новый комментарий *invalid*");
             }
         }
     }
 
     private void validateNameAndEmail(String name, String email) {
         if (name == null || name.trim().isEmpty() || name.length() < 2 || name.length() > 50) {
-            throw new ValidationException("Name is mandatory and must "
-                    + "be between 2 and 50 characters");
+            throw new ValidationException("Имя обязательно "
+                    + "и должно быть от 2 до 50 символов");
         }
         if (email == null || email.trim().isEmpty() || isValidEmail(email)) {
-            throw new ValidationException("Email is mandatory or invalid email address");
+            throw new ValidationException("Почта не введена или не соблюдается формат адреса");
         }
 
     }
 
     private void validatePassword(String password) {
         if (password == null || password.trim().isEmpty()) {
-            throw new ValidationException("Password is mandatory");
+            throw new ValidationException("Пароль обязателен");
         }
         if (password.length() < 5 || password.length() > 20) {
-            throw new ValidationException("Password must be between 5 and 20 characters");
+            throw new ValidationException("Длинна пароля должна быть от 2 до 20 символов");
         }
     }
 
@@ -246,7 +243,6 @@ public class UserService {
                 || password.length() < 5 || password.length() > 20;
     }
 
-    // Метод для проверки валидности email с регулярным выражением
     private boolean isValidEmail(String email) {
         String emailRegex = "^[A-Za-z0-9+_.-]+@(.+)$";
         return !email.matches(emailRegex);

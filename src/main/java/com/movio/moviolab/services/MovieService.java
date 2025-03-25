@@ -25,8 +25,8 @@ import org.springframework.stereotype.Service;
 public class MovieService {
 
     private static final String MOVIE_ALREADY_EXISTS_MESSAGE =
-            "Movie with the same title, genre, and year already exists: ";
-    private static final String MOVIE_NOT_FOUND_MESSAGE = "Movie not found: ";
+            "Фильм с таким названием, жанром и годом уже существует: ";
+    private static final String MOVIE_NOT_FOUND_MESSAGE = "Фильм не найден: ";
     private static final String CACHE_PREFIX_MOVIE_GENRE = "movie_genre_";
 
     private final MovieDao movieDao;
@@ -54,7 +54,6 @@ public class MovieService {
                 .orElseThrow(() -> new MovieException(MOVIE_NOT_FOUND_MESSAGE + id));
         return convertToDto(movie);
     }
-
 
     public MovieDto addMovie(MovieDto movieDto) {
 
@@ -146,10 +145,10 @@ public class MovieService {
         Movie movie = movieDao.findById(movieId)
                 .orElseThrow(() -> new MovieException(MOVIE_NOT_FOUND_MESSAGE + movieId));
         User user = userDao.findById(userId)
-                .orElseThrow(() -> new UserException("User not found: " + userId));
+                .orElseThrow(() -> new UserException("Пользователь не найден: " + userId));
 
         if (movie.getUsers().contains(user)) {
-            throw new UserAlreadyAssociatedException("User is already associated with this movie.");
+            throw new UserAlreadyAssociatedException("Пользователь уже связан с этим фильмом.");
         }
 
 
@@ -159,7 +158,6 @@ public class MovieService {
         movieDao.save(movie);
         userDao.save(user);
 
-        // Clear cache for the genres of this user's movies
         for (Movie userMovies : user.getMovies()) {
             String genre = userMovies.getGenre();
             String key = CACHE_PREFIX_MOVIE_GENRE + genre;
@@ -174,9 +172,8 @@ public class MovieService {
         Movie movie = movieDao.findById(movieId)
                 .orElseThrow(() -> new MovieException(MOVIE_NOT_FOUND_MESSAGE + movieId));
         User user = userDao.findById(userId)
-                .orElseThrow(() -> new UserException("User not found" + userId));
+                .orElseThrow(() -> new UserException("Пользователь не найден:" + userId));
 
-        // Remove user from movie and vice versa
         for (Movie userMovies : user.getMovies()) {
             String genre = userMovies.getGenre();
             String key = CACHE_PREFIX_MOVIE_GENRE + genre;
@@ -194,51 +191,46 @@ public class MovieService {
 
     public List<UserDto> getUsersForMovie(Integer movieId) {
         Movie movie = movieDao.findById(movieId)
-                .orElseThrow(() -> new MovieException("Movie not found with id: " + movieId));
+                .orElseThrow(() -> new MovieException("Пользователь не найден по id: " + movieId));
 
         return movie.getUsers().stream().map(this::convertToDto).toList();
     }
 
     private void validateMovieDto(MovieDto movieDto, boolean isPartial) {
 
-        // Validate the full set of required fields if not partial
         if (!isPartial) {
             validateMandatoryFields(movieDto);
             validateYear(movieDto.getYear());
         } else {
             // For partial validation, check only the necessary fields
             if (isInvalidPartial(movieDto)) {
-                throw new ValidationException("New comment is invalid");
+                throw new ValidationException("Новый комментарий *invalid*");
             }
         }
     }
 
-    // Helper method to validate mandatory fields
     private void validateMandatoryFields(MovieDto movieDto) {
         if (isNullOrEmpty(movieDto.getTitle()) || movieDto.getTitle().length() > 100) {
-            throw new ValidationException("Title is mandatory or longer then 100 characters");
+            throw new ValidationException("Название пусто или превышает 100 символов");
         }
         if (isNullOrEmpty(movieDto.getGenre()) || movieDto.getGenre().length() > 50) {
-            throw new ValidationException("Genre is mandatory or longer then 50 characters");
+            throw new ValidationException("Жанр пуст или превышает 50 символов");
         }
     }
 
-    // Helper method to validate year
     private void validateYear(Integer year) {
         if (year == null || year <= 0) {
-            throw new ValidationException("Year is mandatory and must be a positive number");
+            throw new ValidationException("Год пуст или меньше нуля");
         }
         if (year > LocalDate.now().getYear()) {
-            throw new ValidationException("Year cannot be greater than the current year");
+            throw new ValidationException("Год не может быть больше текущего");
         }
     }
 
-    // Helper method to check for null or empty string
     private boolean isNullOrEmpty(String str) {
         return str == null || str.trim().isEmpty();
     }
 
-    // Helper method to check if partial data is invalid
     private boolean isInvalidPartial(MovieDto movieDto) {
         return (isNullOrEmpty(movieDto.getTitle()) || movieDto.getTitle().length() > 100)
                 && (isNullOrEmpty(movieDto.getGenre()) || movieDto.getGenre().length() > 50)
