@@ -7,6 +7,7 @@ import com.movio.moviolab.dto.CommentDto;
 import com.movio.moviolab.exceptions.CommentException;
 import com.movio.moviolab.exceptions.MovieException;
 import com.movio.moviolab.exceptions.UserException;
+import com.movio.moviolab.exceptions.ValidationException;
 import com.movio.moviolab.models.Comment;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,10 @@ public class CommentService {
     private static final String COMMENT_NOT_FOUND = "Comment not found with id: ";
     private static final String MOVIE_NOT_FOUND_MESSAGE = "Movie not found: ";
     private static final String USER_NOT_FOUND_MESSAGE = "User not found: ";
+    private static final String COMMENT_NOT_BLANK_MESSAGE = "Comment is mandatory";
+    private static final String COMMENT_SIZE_MESSAGE = "Comment must "
+           + "be between 2 and 500 characters";
+
 
     private final CommentDao commentDao;
     private final MovieDao movieDao;
@@ -33,13 +38,26 @@ public class CommentService {
 
     // Метод для добавления комментария
     public ResponseEntity<String> addComment(CommentDto commentDto) {
+
+        String content = commentDto.getContent();
+
+        if (content == null || content.trim().isEmpty()) {
+            throw new ValidationException(COMMENT_NOT_BLANK_MESSAGE);
+        }
+
+        if (content.length() < 2 || content.length() > 500) {
+            throw new ValidationException(COMMENT_SIZE_MESSAGE);
+        }
+
         Integer userId = commentDto.getUserId();
         Integer movieId = commentDto.getMovieId();
 
-        // Проверяем существование фильма и пользователя
+        // Проверка существования фильма
         if (!movieDao.existsById(movieId)) {
             throw new MovieException(MOVIE_NOT_FOUND_MESSAGE + movieId);
         }
+
+        // Проверка существования пользователя
         if (!userDao.existsById(userId)) {
             throw new UserException(USER_NOT_FOUND_MESSAGE + userId);
         }
@@ -60,85 +78,59 @@ public class CommentService {
     }
 
     public ResponseEntity<List<CommentDto>> getAllComments() {
-        try {
-            // Получаем все комментарии из базы данных
-            List<CommentDto> comments = commentDao.findAll().stream()
+
+        List<CommentDto> comments = commentDao.findAll().stream()
                     .map(this::convertToDto)
                     .toList();
-            // Возвращаем список комментариев с кодом 200
-            return ResponseEntity.ok(comments);
-        } catch (Exception e) {
-            // В случае ошибки возвращаем статус 500 и пустой список
-            return ResponseEntity.status(500).body(List.of());
+
+        if (comments.isEmpty()) {
+            throw new CommentException("No comments found.");
         }
+
+        return ResponseEntity.ok(comments);
     }
 
 
     public ResponseEntity<CommentDto> getCommentById(Integer id) {
-        try {
-            // Поиск комментария по ID
-            Comment comment = commentDao.findById(id)
-                    .orElseThrow(() -> new CommentException(COMMENT_NOT_FOUND + id));
-
-            // Преобразуем найденный комментарий в DTO и возвращаем
-            return ResponseEntity.ok(convertToDto(comment));
-        } catch (CommentException e) {
-            // Пробрасываем исключение, если комментарий не найден
-            // В контроллере будет обработано исключение, и будет возвращено сообщение в теле ответа
-            throw e;
-        } catch (Exception e) {
-            // В случае других ошибок пробрасываем их дальше
-            throw new CommentException("Ошибка при получении комментария: " + e.getMessage(), e);
-        }
+        // Поиск комментария по ID
+        Comment comment = commentDao.findById(id)
+                .orElseThrow(() -> new CommentException(COMMENT_NOT_FOUND + id));
+        // Преобразуем найденный комментарий в DTO и возвращаем
+        return ResponseEntity.ok(convertToDto(comment));
     }
 
-
-
-
-
     public CommentDto updateComment(Integer id, CommentDto partialCommentDto) {
-        try {
-            // Находим комментарий по ID. Если не найден, выбрасываем исключение
-            Comment existingComment = commentDao.findById(id)
+        // Находим комментарий по ID. Если не найден, выбрасываем исключение
+        Comment existingComment = commentDao.findById(id)
                     .orElseThrow(() -> new CommentException(COMMENT_NOT_FOUND + id));
 
-            // Обновляем только те поля, которые переданы в partialCommentDto
-            if (partialCommentDto.getContent() != null) {
-                existingComment.setContent(partialCommentDto.getContent());
-            }
+        String newContent = partialCommentDto.getContent();
 
-            // Сохраняем изменения в базе данных
-            Comment updatedComment = commentDao.save(existingComment);
-
-            // Возвращаем обновленный комментарий
-            return convertToDto(updatedComment);
-        } catch (CommentException e) {
-            // Перехватываем исключение CommentException и пробрасываем его дальше
-            throw e;  // Пробрасываем дальше, чтобы контроллер мог обработать ошибку
-        } catch (Exception e) {
-            // В случае непредвиденной ошибки выбрасываем исключение
-            throw new CommentException("Error occurred while updating the comment", e);
+        if (newContent == null || newContent.trim().isEmpty()
+                || newContent.length() < 2 || newContent.length() > 500) {
+            throw new ValidationException("Your " + COMMENT_NOT_BLANK_MESSAGE
+                    + " or " + COMMENT_SIZE_MESSAGE);
         }
+
+        existingComment.setContent(newContent);
+
+        // Сохраняем изменения в базе данных
+        Comment updatedComment = commentDao.save(existingComment);
+
+        // Возвращаем обновленный комментарий
+        return convertToDto(updatedComment);
     }
 
 
 
     // Метод для удаления комментария
     public void deleteComment(Integer id) {
-        try {
-            // Поиск комментария по ID
-            Comment comment = commentDao.findById(id)
+        // Поиск комментария по ID
+        Comment comment = commentDao.findById(id)
                     .orElseThrow(() -> new CommentException("Comment not found with ID: " + id));
 
-            // Удаление комментария
-            commentDao.delete(comment);
-        } catch (CommentException ex) {
-            // Пробрасываем исключение, если комментарий не найден
-            throw ex;  // Re-throw the exception if comment not found
-        } catch (Exception e) {
-            // Обработка других исключений
-            throw new CommentException("Error occurred while deleting the comment", e);
-        }
+        // Удаление комментария
+        commentDao.delete(comment);
     }
 
     // Преобразование модели Comment в DTO

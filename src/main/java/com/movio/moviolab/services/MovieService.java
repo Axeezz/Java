@@ -7,11 +7,14 @@ import com.movio.moviolab.dto.CommentDto;
 import com.movio.moviolab.dto.MovieDto;
 import com.movio.moviolab.dto.UserDto;
 import com.movio.moviolab.exceptions.MovieException;
+import com.movio.moviolab.exceptions.UserAlreadyAssociatedException;
 import com.movio.moviolab.exceptions.UserException;
+import com.movio.moviolab.exceptions.ValidationException;
 import com.movio.moviolab.models.Comment;
 import com.movio.moviolab.models.Movie;
 import com.movio.moviolab.models.User;
 import jakarta.transaction.Transactional;
+import java.time.LocalDate;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -54,6 +57,9 @@ public class MovieService {
 
 
     public MovieDto addMovie(MovieDto movieDto) {
+
+        validateMovieDto(movieDto, false);
+
         Movie movie = convertToEntity(movieDto);
 
         List<Movie> existingMovies = movieDao
@@ -81,6 +87,9 @@ public class MovieService {
 
     @Transactional
     public MovieDto updateMovie(Integer id, MovieDto updatedMovieDto) {
+
+        validateMovieDto(updatedMovieDto, false);
+
         Movie movie = movieDao.findById(id)
                 .orElseThrow(() -> new MovieException(MOVIE_NOT_FOUND_MESSAGE + id));
 
@@ -100,6 +109,9 @@ public class MovieService {
 
     @Transactional
     public MovieDto patchMovie(Integer id, MovieDto partialMovieDto) {
+
+        validateMovieDto(partialMovieDto, true);
+
         Movie movie = movieDao.findById(id)
                 .orElseThrow(() -> new MovieException(MOVIE_NOT_FOUND_MESSAGE + id));
 
@@ -137,9 +149,9 @@ public class MovieService {
                 .orElseThrow(() -> new UserException("User not found: " + userId));
 
         if (movie.getUsers().contains(user)) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("User is already associated with this movie.");
+            throw new UserAlreadyAssociatedException("User is already associated with this movie.");
         }
+
 
         movie.getUsers().add(user);
         user.getMovies().add(movie);
@@ -186,6 +198,54 @@ public class MovieService {
 
         return movie.getUsers().stream().map(this::convertToDto).toList();
     }
+
+    private void validateMovieDto(MovieDto movieDto, boolean isPartial) {
+
+        // Validate the full set of required fields if not partial
+        if (!isPartial) {
+            validateMandatoryFields(movieDto);
+            validateYear(movieDto.getYear());
+        } else {
+            // For partial validation, check only the necessary fields
+            if (isInvalidPartial(movieDto)) {
+                throw new ValidationException("New comment is invalid");
+            }
+        }
+    }
+
+    // Helper method to validate mandatory fields
+    private void validateMandatoryFields(MovieDto movieDto) {
+        if (isNullOrEmpty(movieDto.getTitle()) || movieDto.getTitle().length() > 100) {
+            throw new ValidationException("Title is mandatory or longer then 100 characters");
+        }
+        if (isNullOrEmpty(movieDto.getGenre()) || movieDto.getGenre().length() > 50) {
+            throw new ValidationException("Genre is mandatory or longer then 50 characters");
+        }
+    }
+
+    // Helper method to validate year
+    private void validateYear(Integer year) {
+        if (year == null || year <= 0) {
+            throw new ValidationException("Year is mandatory and must be a positive number");
+        }
+        if (year > LocalDate.now().getYear()) {
+            throw new ValidationException("Year cannot be greater than the current year");
+        }
+    }
+
+    // Helper method to check for null or empty string
+    private boolean isNullOrEmpty(String str) {
+        return str == null || str.trim().isEmpty();
+    }
+
+    // Helper method to check if partial data is invalid
+    private boolean isInvalidPartial(MovieDto movieDto) {
+        return (isNullOrEmpty(movieDto.getTitle()) || movieDto.getTitle().length() > 100)
+                && (isNullOrEmpty(movieDto.getGenre()) || movieDto.getGenre().length() > 50)
+                && (movieDto.getYear() == null || movieDto.getYear() <= 0
+                || movieDto.getYear() > LocalDate.now().getYear());
+    }
+
 
     private MovieDto convertToDto(Movie movie) {
         MovieDto movieDto = new MovieDto();

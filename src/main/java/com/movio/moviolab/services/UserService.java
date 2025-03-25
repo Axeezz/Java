@@ -7,6 +7,7 @@ import com.movio.moviolab.dto.CommentDto;
 import com.movio.moviolab.dto.MovieDto;
 import com.movio.moviolab.dto.UserDto;
 import com.movio.moviolab.exceptions.UserException;
+import com.movio.moviolab.exceptions.ValidationException;
 import com.movio.moviolab.models.Comment;
 import com.movio.moviolab.models.Movie;
 import com.movio.moviolab.models.User;
@@ -63,6 +64,9 @@ public class UserService {
     }
 
     public UserDto addUser(UserDto userDto) {
+
+        validateUser(userDto, false);
+
         User user = convertToEntity(userDto);
         if (!userDao.findByNameIgnoreCase(user.getName()).isEmpty()) {
             throw new IllegalArgumentException(USER_ALREADY_EXISTS_MESSAGE + user.getName());
@@ -97,6 +101,9 @@ public class UserService {
 
     @Transactional
     public UserDto updateUser(Integer id, UserDto updatedUserDto) {
+
+        validateUser(updatedUserDto, false);
+
         User user = userDao.findById(id)
                 .orElseThrow(() -> new UserException(USER_NOT_FOUND_MESSAGE + id));
 
@@ -118,6 +125,9 @@ public class UserService {
 
     @Transactional
     public UserDto patchUser(Integer id, UserDto partialUserDto) {
+
+        validateUser(partialUserDto, true);
+
         User user = userDao.findById(id)
                 .orElseThrow(() -> new UserException(USER_NOT_FOUND_MESSAGE + id));
 
@@ -184,6 +194,62 @@ public class UserService {
         inMemoryCache.put(key, userDtos);
 
         return userDtos;
+    }
+
+    // Функция для валидации данных пользователя
+    private void validateUser(UserDto userDto, boolean isPartial) {
+        if (!isPartial) {
+            // Проверка имени
+            validateNameAndEmail(userDto.getName(), userDto.getEmail());
+
+            // Проверка пароля
+            validatePassword(userDto.getPassword());
+        } else {
+            if (isInvalidName(userDto.getName())
+                    && isInvalidEmail(userDto.getEmail())
+                    && isInvalidPassword(userDto.getPassword())) {
+                throw new ValidationException("New comment is invalid");
+            }
+        }
+    }
+
+    private void validateNameAndEmail(String name, String email) {
+        if (name == null || name.trim().isEmpty() || name.length() < 2 || name.length() > 50) {
+            throw new ValidationException("Name is mandatory and must "
+                    + "be between 2 and 50 characters");
+        }
+        if (email == null || email.trim().isEmpty() || isValidEmail(email)) {
+            throw new ValidationException("Email is mandatory or invalid email address");
+        }
+
+    }
+
+    private void validatePassword(String password) {
+        if (password == null || password.trim().isEmpty()) {
+            throw new ValidationException("Password is mandatory");
+        }
+        if (password.length() < 5 || password.length() > 20) {
+            throw new ValidationException("Password must be between 5 and 20 characters");
+        }
+    }
+
+    private boolean isInvalidName(String name) {
+        return name == null || name.trim().isEmpty() || name.length() < 2 || name.length() > 50;
+    }
+
+    private boolean isInvalidEmail(String email) {
+        return email == null || email.trim().isEmpty() || !isValidEmail(email);
+    }
+
+    private boolean isInvalidPassword(String password) {
+        return password == null || password.trim().isEmpty()
+                || password.length() < 5 || password.length() > 20;
+    }
+
+    // Метод для проверки валидности email с регулярным выражением
+    private boolean isValidEmail(String email) {
+        String emailRegex = "^[A-Za-z0-9+_.-]+@(.+)$";
+        return !email.matches(emailRegex);
     }
 
     private UserDto convertToDto(User user) {

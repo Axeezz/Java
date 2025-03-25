@@ -33,6 +33,10 @@ public class CommentDao {
         commentRepository.delete(comment);
     }
 
+    public boolean existsById(Integer id) {
+        return commentRepository.existsById(id);
+    }
+
     public boolean existsByUserIdAndMovieIdAndContent(Integer userId,
                                                       Integer movieId, String content) {
         return commentRepository

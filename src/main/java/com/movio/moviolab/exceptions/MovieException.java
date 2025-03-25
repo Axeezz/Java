@@ -10,6 +10,6 @@ public class MovieException extends RuntimeException {
     // Конструктор с сообщением (код ошибки по умолчанию)
     public MovieException(String message) {
         super(message);
-        this.errorCode = "UNKNOWN_ERROR"; // Код ошибки по умолчанию
+        this.errorCode = "400"; // Код ошибки по умолчанию
     }
 }

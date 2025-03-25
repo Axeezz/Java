@@ -54,10 +54,10 @@ public class MovieController {
 
     @PostMapping
     public ResponseEntity<MovieDto> addMovie(@RequestBody MovieDto movieDto) {
+        // Валидация данных вручную
         MovieDto newMovie = movieService.addMovie(movieDto);
-        return ResponseEntity.status(201).body(newMovie); // Movie created
+        return ResponseEntity.status(201).body(newMovie);
     }
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteMovie(@PathVariable Integer id) {
