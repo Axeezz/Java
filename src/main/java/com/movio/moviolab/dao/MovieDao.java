@@ -34,6 +34,10 @@ public class MovieDao {
         return movieRepository.save(movie);
     }
 
+    public List<Movie> saveAll(List<Movie> movies) {
+        return movieRepository.saveAll(movies);
+    }
+
     @Transactional
     public void deleteById(Integer id) {
         movieRepository.deleteById(id);

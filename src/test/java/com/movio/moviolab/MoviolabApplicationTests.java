@@ -10,5 +10,4 @@ class MoviolabApplicationTests {
 	void contextLoads() {
 		// Метод будет реализован позже
 	}
-
 }

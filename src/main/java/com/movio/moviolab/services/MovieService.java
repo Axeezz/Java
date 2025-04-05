@@ -6,6 +6,7 @@ import com.movio.moviolab.dao.UserDao;
 import com.movio.moviolab.dto.CommentDto;
 import com.movio.moviolab.dto.MovieDto;
 import com.movio.moviolab.dto.UserDto;
+import com.movio.moviolab.exceptions.BadRequestException;
 import com.movio.moviolab.exceptions.MovieException;
 import com.movio.moviolab.exceptions.UserAlreadyAssociatedException;
 import com.movio.moviolab.exceptions.UserException;
@@ -41,12 +42,18 @@ public class MovieService {
     }
 
     public List<MovieDto> getMovies(String genre, Integer year, String title) {
-        return movieDao.findAll().stream()
+        List<MovieDto> movies = movieDao.findAll().stream()
                 .filter(movie -> genre == null || movie.getGenre().equalsIgnoreCase(genre))
                 .filter(movie -> year == null || movie.getYear().equals(year))
                 .filter(movie -> title == null || movie.getTitle().equalsIgnoreCase(title))
                 .map(this::convertToDto)
                 .toList();
+
+        if (movies.isEmpty()) {
+            throw new MovieException(MOVIE_NOT_FOUND_MESSAGE
+                    + "фильм с такими параметрами не существует");
+        }
+        return movies;
     }
 
     public MovieDto getMovieById(Integer id) {
@@ -151,7 +158,6 @@ public class MovieService {
             throw new UserAlreadyAssociatedException("Пользователь уже связан с этим фильмом.");
         }
 
-
         movie.getUsers().add(user);
         user.getMovies().add(movie);
 
@@ -191,7 +197,7 @@ public class MovieService {
 
     public List<UserDto> getUsersForMovie(Integer movieId) {
         Movie movie = movieDao.findById(movieId)
-                .orElseThrow(() -> new MovieException("Пользователь не найден по id: " + movieId));
+                .orElseThrow(() -> new MovieException("Фильм не найден по id: " + movieId));
 
         return movie.getUsers().stream().map(this::convertToDto).toList();
     }
@@ -202,9 +208,8 @@ public class MovieService {
             validateMandatoryFields(movieDto);
             validateYear(movieDto.getYear());
         } else {
-            // For partial validation, check only the necessary fields
             if (isInvalidPartial(movieDto)) {
-                throw new ValidationException("Новый комментарий *invalid*");
+                throw new ValidationException("Новый фильм *invalid*");
             }
         }
     }
@@ -237,7 +242,6 @@ public class MovieService {
                 && (movieDto.getYear() == null || movieDto.getYear() <= 0
                 || movieDto.getYear() > LocalDate.now().getYear());
     }
-
 
     private MovieDto convertToDto(Movie movie) {
         MovieDto movieDto = new MovieDto();
@@ -280,12 +284,43 @@ public class MovieService {
         return userDto;
     }
 
-    private Movie convertToEntity(MovieDto movieDto) {
+    public Movie convertToEntity(MovieDto movieDto) {
         Movie movie = new Movie();
         movie.setId(movieDto.getId());
         movie.setTitle(movieDto.getTitle());
         movie.setGenre(movieDto.getGenre());
         movie.setYear(movieDto.getYear());
         return movie;
+    }
+
+    public List<MovieDto> addMoviesBulk(List<MovieDto> movieDtos) {
+        if (movieDtos == null || movieDtos.isEmpty()) {
+            throw new BadRequestException("Список фильмов не может быть пуст");
+        }
+
+        List<Movie> moviesToSave = movieDtos.stream()
+                .map(movieDto -> {
+                    validateMovieDto(movieDto, false);
+                    return convertToEntity(movieDto);
+                })
+                .toList();
+
+        List<Movie> validMovies = moviesToSave.stream()
+                .filter(movie -> {
+                    List<Movie> existingMovies = movieDao.findByGenreAndYearAndTitle(
+                            movie.getGenre(), movie.getYear(), movie.getTitle());
+                    return existingMovies.isEmpty();
+                })
+                .toList();
+
+        if (validMovies.isEmpty()) {
+            throw new MovieException("Такие фильмы уже существуют в базе данных");
+        }
+
+        List<Movie> savedMovies = movieDao.saveAll(validMovies);
+
+        return savedMovies.stream()
+                .map(this::convertToDto)
+                .toList();
     }
 }

@@ -41,10 +41,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(UserException.class)
-    public ResponseEntity<UserDto> handleUserException(UserException e) {
+    public ResponseEntity<String> handleUserException(UserException e) {
         UserDto errorDto = new UserDto();
         errorDto.setName(e.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorDto);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -76,5 +76,10 @@ public class GlobalExceptionHandler {
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("message", message);
         return new ResponseEntity<>(errorResponse, status);
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<String> handleBadRequestException(BadRequestException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 }

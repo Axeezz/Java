@@ -24,7 +24,6 @@ public class CommentService {
     private static final String COMMENT_SIZE_MESSAGE = "Длинна комментария "
            + "должна быть от 2 до 500 символов";
 
-
     private final CommentDao commentDao;
     private final MovieDao movieDao;
     private final UserDao userDao;

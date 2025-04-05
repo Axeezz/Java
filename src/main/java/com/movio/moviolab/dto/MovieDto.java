@@ -1,6 +1,7 @@
 package com.movio.moviolab.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,6 +15,6 @@ public class MovieDto {
     private String title;
     private String genre;
     private Integer year;
-    private List<UserDto> users;
-    private List<CommentDto> comments;
+    private List<UserDto> users = new ArrayList<>();
+    private List<CommentDto> comments = new ArrayList<>();
 }

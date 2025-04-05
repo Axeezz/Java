@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -150,12 +151,25 @@ public class MovieController {
     @Operation(summary = "Поиск всех пользоватлей для фильма",
             description = "Возвращает всех пользователей связанных с фильмом")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "список пользователей возвращен"),
+        @ApiResponse(responseCode = "200", description = "Список пользователей возвращен"),
         @ApiResponse(responseCode = "404", description = "Фильм не найден"),
     })
     @GetMapping("/{movieId}/users")
     public ResponseEntity<List<UserDto>> getUsersForMovie(@PathVariable Integer movieId) {
         List<UserDto> users = movieService.getUsersForMovie(movieId);
         return ResponseEntity.ok(users);
+    }
+
+    @Operation(summary = "Добавление нового фильма", description = "Создает новый фильм")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Фильм(ы) добавлен(ы) успешно"),
+        @ApiResponse(responseCode = "400", description = "Неверный(или пустой) запрос"),
+        @ApiResponse(responseCode = "404", description = "Такие фильмы уже существуют")
+    })
+    @PostMapping("/bulk")
+    public ResponseEntity<List<MovieDto>> addMoviesBulk(@RequestBody List<MovieDto> movieDtos) {
+        List<MovieDto> savedMovies = movieService.addMoviesBulk(movieDtos);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedMovies);
     }
 }

@@ -12,6 +12,7 @@ import com.movio.moviolab.models.Comment;
 import com.movio.moviolab.models.Movie;
 import com.movio.moviolab.models.User;
 import jakarta.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -54,6 +55,12 @@ public class UserService {
         } else {
             users = userDao.findAll();
         }
+
+        if (users.isEmpty()) {
+            throw new UserException(USER_NOT_FOUND_MESSAGE
+                    + "пользователь с такими параметрами не существует");
+        }
+
         return users.stream().map(this::convertToDto).toList();
     }
 
@@ -68,12 +75,14 @@ public class UserService {
         validateUser(userDto, false);
 
         User user = convertToEntity(userDto);
+
         if (!userDao.findByNameIgnoreCase(user.getName()).isEmpty()) {
             throw new IllegalArgumentException(USER_ALREADY_EXISTS_MESSAGE + user.getName());
         }
         if (!userDao.findByEmailIgnoreCase(user.getEmail()).isEmpty()) {
             throw new IllegalArgumentException(USER_ALREADY_EXISTS_MESSAGE + user.getEmail());
         }
+
         User savedUser = userDao.save(user);
 
         return convertToDto(savedUser);
@@ -156,6 +165,11 @@ public class UserService {
     public List<CommentDto> getCommentsByUserId(Integer id) {
         User user = userDao.findById(id).orElseThrow(()
                 -> new UserException(USER_NOT_FOUND_MESSAGE + id));
+
+        if (user.getComments() == null) {
+            user.setComments(new ArrayList<>());
+        }
+
         return user.getComments().stream().map(this::convertToDto).toList();
     }
 
@@ -205,7 +219,7 @@ public class UserService {
             if (isInvalidName(userDto.getName())
                     && isInvalidEmail(userDto.getEmail())
                     && isInvalidPassword(userDto.getPassword())) {
-                throw new ValidationException("Новый комментарий *invalid*");
+                throw new ValidationException("Новый пользователь *invalid*");
             }
         }
     }
@@ -226,7 +240,7 @@ public class UserService {
             throw new ValidationException("Пароль обязателен");
         }
         if (password.length() < 5 || password.length() > 20) {
-            throw new ValidationException("Длинна пароля должна быть от 2 до 20 символов");
+            throw new ValidationException("Длинна пароля должна быть от 5 до 20 символов");
         }
     }
 
@@ -235,7 +249,7 @@ public class UserService {
     }
 
     private boolean isInvalidEmail(String email) {
-        return email == null || email.trim().isEmpty() || !isValidEmail(email);
+        return email == null || email.trim().isEmpty() || isValidEmail(email);
     }
 
     private boolean isInvalidPassword(String password) {
@@ -249,6 +263,10 @@ public class UserService {
     }
 
     private UserDto convertToDto(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("Пользователь не может быть null");
+        }
+
         UserDto userDto = new UserDto();
         userDto.setId(user.getId());
         userDto.setName(user.getName());
@@ -280,7 +298,7 @@ public class UserService {
         return commentDto;
     }
 
-    private MovieDto convertToDto(Movie movie) {
+    public MovieDto convertToDto(Movie movie) {
         MovieDto movieDto = new MovieDto();
         movieDto.setId(movie.getId());
         movieDto.setTitle(movie.getTitle());
