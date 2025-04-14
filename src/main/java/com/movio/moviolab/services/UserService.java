@@ -235,7 +235,7 @@ public class UserService {
 
     }
 
-    private void validatePassword(String password) {
+    public void validatePassword(String password) {
         if (password == null || password.trim().isEmpty()) {
             throw new ValidationException("Пароль обязателен");
         }
@@ -244,15 +244,15 @@ public class UserService {
         }
     }
 
-    private boolean isInvalidName(String name) {
+    public boolean isInvalidName(String name) {
         return name == null || name.trim().isEmpty() || name.length() < 2 || name.length() > 50;
     }
 
-    private boolean isInvalidEmail(String email) {
+    public boolean isInvalidEmail(String email) {
         return email == null || email.trim().isEmpty() || isValidEmail(email);
     }
 
-    private boolean isInvalidPassword(String password) {
+    public boolean isInvalidPassword(String password) {
         return password == null || password.trim().isEmpty()
                 || password.length() < 5 || password.length() > 20;
     }

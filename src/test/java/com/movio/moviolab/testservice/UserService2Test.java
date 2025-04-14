@@ -15,7 +15,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -308,4 +307,25 @@ class UserService2Test {
 
         assertEquals("Пользователь не найден: пользователь с такими параметрами не существует", exception.getMessage());
     }
+
+    @Test
+    void testIsInvalidName_Cases() {
+        assertTrue(userService.isInvalidName(null));
+        assertTrue(userService.isInvalidName(""));
+        assertTrue(userService.isInvalidName(" "));  // whitespace
+        assertTrue(userService.isInvalidName("A"));  // too short
+        assertTrue(userService.isInvalidName("A".repeat(51)));  // too long
+        assertFalse(userService.isInvalidName("John Doe"));
+    }
+
+    @Test
+    void testIsInvalidPassword_VariousCases() {
+        assertTrue(userService.isInvalidPassword(null));
+        assertTrue(userService.isInvalidPassword(""));         // empty
+        assertTrue(userService.isInvalidPassword("  "));       // whitespace
+        assertTrue(userService.isInvalidPassword("123"));      // too short
+        assertTrue(userService.isInvalidPassword("a".repeat(21))); // too long
+        assertFalse(userService.isInvalidPassword("validPass"));
+    }
+
 }

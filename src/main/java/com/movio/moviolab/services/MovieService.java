@@ -214,7 +214,7 @@ public class MovieService {
         }
     }
 
-    private void validateMandatoryFields(MovieDto movieDto) {
+    public void validateMandatoryFields(MovieDto movieDto) {
         if (isNullOrEmpty(movieDto.getTitle()) || movieDto.getTitle().length() > 100) {
             throw new ValidationException("Название пусто или превышает 100 символов");
         }
@@ -236,14 +236,14 @@ public class MovieService {
         return str == null || str.trim().isEmpty();
     }
 
-    private boolean isInvalidPartial(MovieDto movieDto) {
+    public boolean isInvalidPartial(MovieDto movieDto) {
         return (isNullOrEmpty(movieDto.getTitle()) || movieDto.getTitle().length() > 100)
                 && (isNullOrEmpty(movieDto.getGenre()) || movieDto.getGenre().length() > 50)
                 && (movieDto.getYear() == null || movieDto.getYear() <= 0
                 || movieDto.getYear() > LocalDate.now().getYear());
     }
 
-    private MovieDto convertToDto(Movie movie) {
+    public MovieDto convertToDto(Movie movie) {
         MovieDto movieDto = new MovieDto();
         movieDto.setId(movie.getId());
         movieDto.setTitle(movie.getTitle());
