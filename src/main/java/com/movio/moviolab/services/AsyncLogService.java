@@ -1,5 +1,6 @@
 package com.movio.moviolab.services;
 
+import com.movio.moviolab.exceptions.LogNotReadyException;
 import jakarta.annotation.PreDestroy;
 import java.io.BufferedReader;
 import java.io.File;
@@ -57,7 +58,7 @@ public class AsyncLogService {
     public Map<String, Object> getTaskStatus(String taskId) {
         TaskWrapper wrapper = tasks.get(taskId.trim());
         if (wrapper == null || wrapper.isExpired()) {
-            throw new NoSuchElementException("Task not found or expired");
+            throw new NoSuchElementException("Задача закончена или ненайдена");
         }
         return wrapper.getStatus();
     }
@@ -65,13 +66,18 @@ public class AsyncLogService {
     public LogFileResult getLogFile(String taskId) {
         TaskWrapper wrapper = tasks.get(taskId.trim());
         if (wrapper == null || wrapper.isExpired()) {
-            throw new NoSuchElementException("Task not found or expired");
+            throw new NoSuchElementException("Задача не найдена или устарела");
+        }
+        if (!wrapper.future.isDone()) {
+            throw new LogNotReadyException("Файл ещё не создан. Пожалуйста, подождите.");
         }
         return wrapper.getResult();
     }
 
+
     private LogFileResult processLogs(String date) {
         try {
+            Thread.sleep(30_000);
             List<String> logs = readLogsByDate(date);
             String content = String.join("\n", logs);
             ByteArrayResource resource = new ByteArrayResource(content
@@ -82,10 +88,14 @@ public class AsyncLogService {
                 }
             };
             return new LogFileResult(resource, logs.isEmpty());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new CompletionException("Обработка лог файла была прерана на дату: " + date, e);
         } catch (Exception e) {
-            throw new CompletionException("Failed to process logs for date: " + date, e);
+            throw new CompletionException("Ошибка обработки лог файла на дату: " + date, e);
         }
     }
+
 
     private List<String> readLogsByDate(String date) throws IOException {
         List<String> logs = new ArrayList<>();
@@ -140,7 +150,7 @@ public class AsyncLogService {
     public record LogFileResult(ByteArrayResource resource, boolean empty) {
         public ByteArrayResource getResource() {
             if (empty) {
-                throw new IllegalStateException("Log is empty");
+                throw new IllegalStateException("Лог пуст");
             }
             return resource;
         }
@@ -177,9 +187,9 @@ public class AsyncLogService {
                 return future.get();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new IllegalStateException("Task interrupted", e);
+                throw new IllegalStateException("Задача прервана", e);
             } catch (ExecutionException e) {
-                throw new IllegalStateException("Task failed", e.getCause());
+                throw new IllegalStateException("Ошибка задачи", e.getCause());
             }
         }
 
@@ -189,7 +199,7 @@ public class AsyncLogService {
             if (completed) {
                 map.put("expiresIn", Math.max(0, (expiration - System.currentTimeMillis()) / 1000));
             } else {
-                map.put("expiresIn", "TBD");
+                map.put("expiresIn", "To Be Determined");
             }
             return map;
         }
